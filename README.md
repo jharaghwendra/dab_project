@@ -2,7 +2,7 @@
 
 A Databricks Asset Bundle (DAB) project implementing a Bronze-Silver-Gold Medallion
 architecture for Citibike trip data using Delta Lake, Delta Live Tables (DLT),
-and Databricks Workflows.
+and Databricks Workflows..
 
 ---
 
@@ -12,8 +12,8 @@ and Databricks Workflows.
 dab_project/
 ├── databricks.yml              # DAB bundle config — targets: dev, test, prod
 ├── pyproject.toml              # Python project metadata and dev dependencies
-├── requiremnts_pyspark.txt     # Local PySpark unit test venv dependencies
-├── requiremnts_dbc.txt         # Databricks Connect integration test venv dependencies
+├── requirements_pyspark.txt    # Local PySpark unit test venv dependencies
+├── requirements_dbc.txt        # Databricks Connect integration test venv dependencies
 ├── .coveragerc                 # pytest-cov configuration (source=src, show_missing=True)
 │
 ├── src/                        # Importable Python source code (tested locally)
@@ -82,7 +82,7 @@ python -m venv .venv_pyspark
 .venv_pyspark\Scripts\Activate.ps1
 
 # 3. Install dependencies
-pip install -r requiremnts_pyspark.txt
+pip install -r requirements_pyspark.txt
 
 # 4. Install this project in editable mode (so src/ is importable)
 pip install -e .
@@ -105,7 +105,7 @@ python -m venv .venv_dbc
 .venv_dbc\Scripts\Activate.ps1
 
 # 3. Install dependencies
-pip install -r requiremnts_dbc.txt
+pip install -r requirements_dbc.txt
 
 # 4. Install this project in editable mode
 pip install -e .

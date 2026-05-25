@@ -30,8 +30,7 @@ def test_01_trip_duration_basic_minutes(spark):
     out = get_trip_duration_mins(spark, df, "started_at", "ended_at", "trip_duration_mins")
     # Collect the single column we care about; orderBy makes the result order predictable.
     actual = [row["trip_duration_mins"] for row in out.orderBy("trip_duration_mins").collect()]
-    # INTENTIONALLY WRONG: 2nd trip is 10:00->10:30 = 30 mins, not 25.0
-    expected = [10.0, 25.0]  # correct value is 30.0
+    expected = [10.0, 30.0]
     assert actual == expected
 
 
@@ -232,7 +231,7 @@ def test_08_gold_daily_summary_multiple_days(spark):
     ]
     expected = [
         (datetime.date(2025, 4, 10), 20.0, 10.0, 15.0, 2),
-        (datetime.date(2025, 4, 11), 30.0, 30.0, 30.0, 99),  # INTENTIONALLY WRONG: correct total_trips is 1, not 99
+        (datetime.date(2025, 4, 11), 30.0, 30.0, 30.0, 1),
     ]
     assert actual == expected
 
@@ -261,7 +260,7 @@ def test_09_gold_station_performance_by_day_and_station(spark):
         for row in out.orderBy("trip_start_date", "start_station_name").collect()
     ]
     expected = [
-        (datetime.date(2025, 4, 10), "Station A", 99.0, 2),  # INTENTIONALLY WRONG: avg([10,20])=15.0, not 99.0
+        (datetime.date(2025, 4, 10), "Station A", 15.0, 2),
         (datetime.date(2025, 4, 10), "Station B", 30.0, 1),
     ]
     assert actual == expected

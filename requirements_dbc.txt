@@ -5,7 +5,7 @@
 # To create the venv and install:
 #   python -m venv .venv_dbc
 #   .venv_dbc\Scripts\Activate.ps1
-#   pip install -r requiremnts_dbc.txt
+#   pip install -r requirements_dbc.txt
 #   pip install -e .        <-- install this project in editable mode (NOT the .whl path)
 #
 # Run integration tests:
