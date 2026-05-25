@@ -1,0 +1,53 @@
+# -----------------------------------------------------------------------
+# Databricks Asset Bundle — local deployment state (resource IDs, etc.)
+# -----------------------------------------------------------------------
+.databricks/
+
+# -----------------------------------------------------------------------
+# Python build / packaging artifacts
+# -----------------------------------------------------------------------
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+
+# -----------------------------------------------------------------------
+# Virtual environments — both venvs used in this project
+# -----------------------------------------------------------------------
+.venv*/
+
+# -----------------------------------------------------------------------
+# Test & coverage outputs
+# -----------------------------------------------------------------------
+.coverage
+htmlcov/
+.pytest_cache/
+
+# -----------------------------------------------------------------------
+# VS Code workspace settings — machine-specific interpreter paths differ
+# per developer machine; do NOT commit these.
+# Exception: extensions.json is useful for onboarding (recommended extensions).
+# -----------------------------------------------------------------------
+.vscode/
+!.vscode/extensions.json
+
+# -----------------------------------------------------------------------
+# Environment / secrets — never commit tokens or local env overrides
+# -----------------------------------------------------------------------
+.env
+.env.*
+*.env
+
+# -----------------------------------------------------------------------
+# Scratch folder — local exploration only, except its README
+# -----------------------------------------------------------------------
+scratch/**
+!scratch/README.md
+
+# -----------------------------------------------------------------------
+# Exploration notebooks — ad-hoc, not production code
+# -----------------------------------------------------------------------
+**/explorations/**
+!**/explorations/README.md

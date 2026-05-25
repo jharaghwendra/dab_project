@@ -1,0 +1,44 @@
+﻿# -----------------------------------------------------------------------
+# Databricks Connect integration testing dependencies
+# Used with .venv_dbc virtual environment
+#
+# To create the venv and install:
+#   python -m venv .venv_dbc
+#   .venv_dbc\Scripts\Activate.ps1
+#   pip install -r requiremnts_dbc.txt
+#   pip install -e .        <-- install this project in editable mode (NOT the .whl path)
+#
+# Run integration tests:
+#   $env:DATABRICKS_CONFIG_PROFILE="DEFAULT"
+#   pytest tests/test_citibike_catalog_integration.py -vv
+#
+# NOTE: pandas, pyarrow, grpcio, googleapis-common-protos, zstandard, protobuf
+#       are all auto-installed as transitive deps of databricks-connect — no need to list them.
+# -----------------------------------------------------------------------
+
+# Core Databricks Connect runtime (brings in Spark Connect + all grpcio deps automatically)
+databricks-connect==18.1.3
+
+# Databricks SDK — authentication, workspace API, used by databricks-connect
+databricks-sdk==0.110.0
+
+# DLT stub package — required for importing databricks.dlt in local development
+databricks-dlt==0.3.0
+
+# Linter (declared in pyproject.toml dev deps)
+ruff==0.15.13
+
+# Test runner
+pytest==9.0.3
+
+# Coverage reporting (used with --cov flag)
+pytest-cov==7.1.0
+coverage==7.14.0
+
+# -----------------------------------------------------------------------
+# Notebook support — required to run citibike_etl/notebooks/*.ipynb in VS Code
+# Install ipykernel only; ipython, jupyter_client, jupyter_core, pyzmq,
+# tornado, traitlets, comm, nest-asyncio, debugpy are all transitive deps
+# that pip installs automatically.
+# -----------------------------------------------------------------------
+ipykernel==7.2.0

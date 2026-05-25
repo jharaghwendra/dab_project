@@ -1,0 +1,31 @@
+﻿# -----------------------------------------------------------------------
+# Local PySpark unit testing dependencies
+# Used with .venv_pyspark virtual environment
+#
+# To create the venv and install:
+#   python -m venv .venv_pyspark
+#   .venv_pyspark\Scripts\Activate.ps1
+#   pip install -r requiremnts_pyspark.txt
+#   pip install -e .
+#
+# Run tests:
+#   pytest tests/test_citibike_utils.py tests/test_datetime_utils.py --cov -vv
+# -----------------------------------------------------------------------
+
+# Core PySpark runtime (py4j and lark are transitive deps — installed automatically)
+# Equivalent to: pip install "pyspark[sql]"  which bundles pandas + pyarrow for Spark SQL
+pyspark==4.1.2
+
+# Required for Spark SQL (per PySpark docs: pandas>=2.2.0, pyarrow>=15.0.0)
+pyarrow==24.0.0
+pandas==3.0.3
+
+# NOTE: Spark Connect deps (grpcio, googleapis-common-protos, zstandard) are NOT here.
+# They belong in .venv_dbc (Databricks Connect venv) only.
+
+# Test runner
+pytest==9.0.3
+
+# Coverage reporting (used with --cov flag)
+pytest-cov==7.1.0
+coverage==7.14.0

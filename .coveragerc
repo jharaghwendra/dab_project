@@ -1,0 +1,24 @@
+[run]
+# Set source root so you can just run: pytest --cov  (no need for --cov=src every time)
+source = src
+omit =
+    # Package marker files — no logic to test
+    src/__init__.py
+    src/*/__init__.py
+    # Entry point script — not a library, not unit-testable
+    src/dab_project/main.py
+    # Packaging metadata — not application code
+    src/dab_project.egg-info/*
+    setup.py
+    # Test files themselves — coverage of tests is not useful
+    tests/*
+    # Scratch / build / docs — not production code
+    scratch/*
+    build/*
+    docs/*
+
+[report]
+# Show which specific line numbers are NOT covered (same as --cov-report=term-missing)
+show_missing = True
+# Skip files that have zero executable statements (e.g. empty __init__.py that slipped through)
+skip_empty = True

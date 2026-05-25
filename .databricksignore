@@ -1,0 +1,37 @@
+# Python virtual environments - never deploy these
+.venv_dbc
+.venv
+venv
+env
+
+# Python cache files
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git
+.gitignore
+
+# Build artifacts
+build
+dist
+*.egg-info
+
+# Temporary files
+.scratch
+tmp
+temp
+
+# OS files
+Thumbs.db
