@@ -5,7 +5,7 @@
 # To create the venv and install:
 #   python -m venv .venv_pyspark
 #   .venv_pyspark\Scripts\Activate.ps1
-#   pip install -r requiremnts_pyspark.txt
+#   pip install -r requirements_pyspark.txt
 #   pip install -e .
 #
 # Run tests:

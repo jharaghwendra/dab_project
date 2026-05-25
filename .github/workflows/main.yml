@@ -1,16 +1,41 @@
-name: 'demo workflow'
+---
+name: 'CI Workflow'
 
 on:
   push:
     branches:
-      - 'main'
       - 'feature/**'
+  pull_request:
+    branches:
+      - 'main'
 
 jobs:
-  demo-job:
-   runs-on: ubuntu-latest
-   steps:
-     - name: This is Step1
-       run: echo "This is Step1 message"
-     - name: This is Step2
-       run: echo "This is Step2 message"
+  ci_job:
+    name: 'CI Job'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 'Install dependencies'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_pyspark.txt
+          pip install -e .
+
+      - name: 'Run Pytests and generate coverage report'
+        run: |
+          pytest --disable-warnings --cov \
+            --cov-report=term-missing \
+            --cov-report=html
+
+      - name: 'Upload coverage HTML report as artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html-report
+          path: htmlcov
