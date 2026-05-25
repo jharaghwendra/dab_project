@@ -2,7 +2,7 @@
 
 A Databricks Asset Bundle (DAB) project implementing a Bronze-Silver-Gold Medallion
 architecture for Citibike trip data using Delta Lake, Delta Live Tables (DLT),
-and Databricks Workflows.
+and Databricks Workflows..
 
 ---
 
