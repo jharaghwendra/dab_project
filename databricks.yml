@@ -41,8 +41,10 @@ targets:
       catalog: "citibike_test"
       dev_flag: false
     permissions:
-      - user_name: jharaghwendra@gmail.com
+      - service_principal_name: 5c03746d-65e1-48bc-af57-474fe2e8ed3c
         level: CAN_MANAGE
+    run_as:
+      service_principal_name: 5c03746d-65e1-48bc-af57-474fe2e8ed3c
   prod:
     mode: production
     workspace:
@@ -53,5 +55,7 @@ targets:
       catalog: "citibike_prod"
       dev_flag: false
     permissions:
-      - user_name: jharaghwendra@gmail.com
+      - service_principal_name:  8ca0d003-42ad-44eb-b0ef-2112862316b2
         level: CAN_MANAGE
+    run_as:
+      service_principal_name:  8ca0d003-42ad-44eb-b0ef-2112862316b2
