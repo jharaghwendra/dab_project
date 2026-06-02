@@ -17,6 +17,7 @@ from dataclasses import dataclass
 
 from pyspark.sql.types import (
     ByteType,
+    DateType,
     DecimalType,
     DoubleType,
     IntegerType,
@@ -31,6 +32,7 @@ from pyspark.sql.types import (
 class TableConfig:
     primary_key: str
     schema: StructType
+    version_col: str = "version"  # column used to pick the latest row per primary key in micro-batch dedup
 
 
 # ---------------------------------------------------------------------------
@@ -140,6 +142,415 @@ _GAMETRANSACTION_SCHEMA = StructType(
 )
 
 # ---------------------------------------------------------------------------
+# userdata
+# ---------------------------------------------------------------------------
+# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
+#   idx_createdat       (createdAt)
+#   idx_firstDepositAt  (firstDepositAt)
+#   idx_last_update     (last_update)
+#   idx_updatedat       (updatedAt)
+_USERDATA_SCHEMA = StructType(
+    [
+        StructField("createdAt", TimestampType(), True),
+        StructField("updatedAt", TimestampType(), True),
+        StructField("processedAt", TimestampType(), True),
+        StructField("achievementLevel", IntegerType(), True),
+        StructField("address1", StringType(), True),
+        StructField("address2", StringType(), True),
+        StructField("affiliateId", StringType(), True),
+        StructField("age", IntegerType(), True),
+        StructField("balances", StringType(), True),
+        StructField("betLimitActive", ByteType(), True),
+        StructField("betLimitRemaining", DecimalType(34, 4), True),
+        StructField("bgw", DecimalType(34, 4), True),
+        StructField("birthDate", DateType(), True),
+        StructField("birthCity", StringType(), True),
+        StructField("birthDay", DateType(), True),
+        StructField("bonusCost", DecimalType(34, 4), True),
+        StructField("brandId", StringType(), True),
+        StructField("city", StringType(), True),
+        StructField("countryCode", StringType(), True),
+        StructField("currencyCode", StringType(), True),
+        StructField("definiteLockActive", ByteType(), True),
+        StructField("depositLimitActive", ByteType(), True),
+        StructField("depositLimitRemaining", DecimalType(34, 4), True),
+        StructField("email", StringType(), True),
+        StructField("firstBetAt", TimestampType(), True),
+        StructField("firstDepositAmount", DecimalType(34, 4), True),
+        StructField("firstDepositAt", TimestampType(), True),
+        StructField("firstDepositCurrencyCode", StringType(), True),
+        StructField("firstName", StringType(), True),
+        StructField("firstRealMoneyBetAt", TimestampType(), True),
+        StructField("gender", StringType(), True),
+        StructField("ggw", DecimalType(34, 4), True),
+        StructField("indefiniteLockActive", ByteType(), True),
+        StructField("ip", StringType(), True),
+        StructField("isEmailVerified", ByteType(), True),
+        StructField("isMigrated", ByteType(), True),
+        StructField("isPhoneVerified", ByteType(), True),
+        StructField("jurisdiction", StringType(), True),
+        StructField("lastBetAt", TimestampType(), True),
+        StructField("lastBetLimitExceededAt", TimestampType(), True),
+        StructField("lastDepositAmount", DecimalType(34, 4), True),
+        StructField("lastDepositAt", TimestampType(), True),
+        StructField("lastDepositLimitExceededAt", TimestampType(), True),
+        StructField("lastDepositCurrencyCode", StringType(), True),
+        StructField("lastLockAt", TimestampType(), True),
+        StructField("lastLockReason", StringType(), True),
+        StructField("lastLoginAt", TimestampType(), True),
+        StructField("lastLossLimitExceededAt", TimestampType(), True),
+        StructField("lastName", StringType(), True),
+        StructField("lastRealMoneyBetAt", TimestampType(), True),
+        StructField("lastSessionLimitExceededAt", TimestampType(), True),
+        StructField("localeCode", StringType(), True),
+        StructField("locked", ByteType(), True),
+        StructField("loginAfterLock", ByteType(), True),
+        StructField("lossLimitActive", ByteType(), True),
+        StructField("lossLimitRemaining", DecimalType(34, 4), True),
+        StructField("maidenName", StringType(), True),
+        StructField("nationality", StringType(), True),
+        StructField("numberOfDeposits", IntegerType(), True),
+        StructField("numberOfRefunds", IntegerType(), True),
+        StructField("numberOfWithdrawals", IntegerType(), True),
+        StructField("organizationId", StringType(), True),
+        StructField("pathProgress", StringType(), True),
+        StructField("pep", ByteType(), True),
+        StructField("phone", StringType(), True),
+        StructField("postcode", StringType(), True),
+        StructField("receiveEmail", ByteType(), True),
+        StructField("receivePhone", ByteType(), True),
+        StructField("receiveSms", ByteType(), True),
+        StructField("receiveSnail", ByteType(), True),
+        StructField("referralUri", StringType(), True),
+        StructField("riskTags", StringType(), True),
+        StructField("rgw", DecimalType(34, 4), True),
+        StructField("sanctioned", ByteType(), True),
+        StructField("segmentIds", StringType(), True),
+        StructField("sessionLimitActive", ByteType(), True),
+        StructField("sessionLimitRemaining", DoubleType(), True),
+        StructField("state", StringType(), True),
+        StructField("suspectedFraud", ByteType(), True),
+        StructField("tags", StringType(), True),
+        StructField("totalBalance", DecimalType(34, 4), True),
+        StructField("totalBet", DecimalType(34, 4), True),
+        StructField("totalBetSinceLastDeposit", DecimalType(34, 4), True),
+        StructField("totalDeposit", DecimalType(34, 4), True),
+        StructField("totalDepositInCurrency", StringType(), True),
+        StructField("totalRealBetSinceLastDeposit", DecimalType(34, 4), True),
+        StructField("totalRefund", DecimalType(34, 4), True),
+        StructField("totalRefundInCurrency", StringType(), True),
+        StructField("totalWin", DecimalType(34, 4), True),
+        StructField("totalWithdraw", DecimalType(34, 4), True),
+        StructField("userId", StringType(), False),
+        StructField("verifiedKyc", ByteType(), True),
+        StructField("vipLevel", IntegerType(), True),
+        StructField("browser", StringType(), True),
+        StructField("device", StringType(), True),
+        StructField("os", StringType(), True),
+        StructField("bgwInCurrency", StringType(), True),
+        StructField("bonusCostInCurrency", StringType(), True),
+        StructField("firstRealMoneyBetAtCurrencyCode", StringType(), True),
+        StructField("ggwInCurrency", StringType(), True),
+        StructField("lastBetAtCurrencyCode", StringType(), True),
+        StructField("lastRealMoneyBetAtCurrencyCode", StringType(), True),
+        StructField("retailVerifiedAt", TimestampType(), True),
+        StructField("sumsubKycVerifiedAt", TimestampType(), True),
+        StructField("totalBetInCurrency", StringType(), True),
+        StructField("totalBetSinceLastDepositInCurrency", StringType(), True),
+        StructField("totalBonusBalance", DecimalType(34, 4), True),
+        StructField("totalBonusBalanceInCurrency", StringType(), True),
+        StructField("totalBonusBet", DecimalType(34, 4), True),
+        StructField("totalBonusBetInCurrency", StringType(), True),
+        StructField("totalBonusWin", DecimalType(34, 4), True),
+        StructField("totalBonusWinInCurrency", StringType(), True),
+        StructField("totalDepositForLicence", DecimalType(34, 4), True),
+        StructField("totalRealBalance", DecimalType(34, 4), True),
+        StructField("totalRealBalanceInCurrency", StringType(), True),
+        StructField("totalRealBet", DecimalType(34, 4), True),
+        StructField("totalRealBetInCurrency", StringType(), True),
+        StructField("totalRealBetSinceLastDepositInCurrency", StringType(), True),
+        StructField("totalRealWin", DecimalType(34, 4), True),
+        StructField("totalRealWinInCurrency", StringType(), True),
+        StructField("totalRefundForLicence", DecimalType(34, 4), True),
+        StructField("totalWinInCurrency", StringType(), True),
+        StructField("totalWithdrawForLicence", DecimalType(34, 4), True),
+        StructField("totalWithdrawInCurrency", StringType(), True),
+        StructField("firstBetAtCurrencyCode", StringType(), True),
+        StructField("lastNameAffix", StringType(), True),
+        StructField("lastNetDepositLimitExceededAt", TimestampType(), True),
+        StructField("schufaKycRisk", StringType(), True),
+        StructField("verifiedStatus", StringType(), True),
+        StructField("discardable", ByteType(), True),
+        StructField("betLimitRemaining_eur", DecimalType(34, 4), True),
+        StructField("betLimitRemaining_base", DecimalType(34, 4), True),
+        StructField("bgw_eur", DecimalType(34, 4), True),
+        StructField("bgw_base", DecimalType(34, 4), True),
+        StructField("bonusCost_eur", DecimalType(34, 4), True),
+        StructField("bonusCost_base", DecimalType(34, 4), True),
+        StructField("depositLimitRemaining_eur", DecimalType(34, 4), True),
+        StructField("depositLimitRemaining_base", DecimalType(34, 4), True),
+        StructField("firstDepositAmount_eur", DecimalType(34, 4), True),
+        StructField("firstDepositAmount_base", DecimalType(34, 4), True),
+        StructField("ggw_eur", DecimalType(34, 4), True),
+        StructField("ggw_base", DecimalType(34, 4), True),
+        StructField("lastDepositAmount_eur", DecimalType(34, 4), True),
+        StructField("lastDepositAmount_base", DecimalType(34, 4), True),
+        StructField("lossLimitRemaining_eur", DecimalType(34, 4), True),
+        StructField("lossLimitRemaining_base", DecimalType(34, 4), True),
+        StructField("rgw_eur", DecimalType(34, 4), True),
+        StructField("rgw_base", DecimalType(34, 4), True),
+        StructField("totalBalance_eur", DecimalType(34, 4), True),
+        StructField("totalBalance_base", DecimalType(34, 4), True),
+        StructField("totalBet_eur", DecimalType(34, 4), True),
+        StructField("totalBet_base", DecimalType(34, 4), True),
+        StructField("totalBetSinceLastDeposit_eur", DecimalType(34, 4), True),
+        StructField("totalBetSinceLastDeposit_base", DecimalType(34, 4), True),
+        StructField("totalBonusBalance_eur", DecimalType(34, 4), True),
+        StructField("totalBonusBalance_base", DecimalType(34, 4), True),
+        StructField("totalBonusBet_eur", DecimalType(34, 4), True),
+        StructField("totalBonusBet_base", DecimalType(34, 4), True),
+        StructField("totalBonusWin_eur", DecimalType(34, 4), True),
+        StructField("totalBonusWin_base", DecimalType(34, 4), True),
+        StructField("totalDeposit_eur", DecimalType(34, 4), True),
+        StructField("totalDeposit_base", DecimalType(34, 4), True),
+        StructField("totalDepositForLicence_eur", DecimalType(34, 4), True),
+        StructField("totalDepositForLicence_base", DecimalType(34, 4), True),
+        StructField("totalRealBalance_eur", DecimalType(34, 4), True),
+        StructField("totalRealBalance_base", DecimalType(34, 4), True),
+        StructField("totalRealBet_eur", DecimalType(34, 4), True),
+        StructField("totalRealBet_base", DecimalType(34, 4), True),
+        StructField("totalRealBetSinceLastDeposit_eur", DecimalType(34, 4), True),
+        StructField("totalRealBetSinceLastDeposit_base", DecimalType(34, 4), True),
+        StructField("totalRealWin_eur", DecimalType(34, 4), True),
+        StructField("totalRealWin_base", DecimalType(34, 4), True),
+        StructField("totalRefund_eur", DecimalType(34, 4), True),
+        StructField("totalRefund_base", DecimalType(34, 4), True),
+        StructField("totalRefundForLicence_eur", DecimalType(34, 4), True),
+        StructField("totalRefundForLicence_base", DecimalType(34, 4), True),
+        StructField("totalWin_eur", DecimalType(34, 4), True),
+        StructField("totalWin_base", DecimalType(34, 4), True),
+        StructField("totalWithdraw_eur", DecimalType(34, 4), True),
+        StructField("totalWithdraw_base", DecimalType(34, 4), True),
+        StructField("totalWithdrawForLicence_eur", DecimalType(34, 4), True),
+        StructField("totalWithdrawForLicence_base", DecimalType(34, 4), True),
+        StructField("firstOnlineSessionAt", TimestampType(), True),
+        StructField("betLimitTotal", DecimalType(34, 4), True),
+        StructField("depositLimitTotal", DecimalType(34, 4), True),
+        StructField("lossLimitTotal", DecimalType(34, 4), True),
+        StructField("mgtKycVerifiedAt", TimestampType(), True),
+        StructField("multiLog24VerifiedAt", TimestampType(), True),
+        StructField("sessionLimitTotal", DecimalType(34, 4), True),
+        StructField("shopRef", StringType(), True),
+        StructField("terminalRef", StringType(), True),
+        StructField("type", StringType(), True),
+        StructField("betLimitTotal_eur", DecimalType(34, 4), True),
+        StructField("betLimitTotal_base", DecimalType(34, 4), True),
+        StructField("depositLimitTotal_eur", DecimalType(34, 4), True),
+        StructField("depositLimitTotal_base", DecimalType(34, 4), True),
+        StructField("lossLimitTotal_eur", DecimalType(34, 4), True),
+        StructField("lossLimitTotal_base", DecimalType(34, 4), True),
+    ]
+)
+
+# ---------------------------------------------------------------------------
+# payment
+# ---------------------------------------------------------------------------
+# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
+#   idx_completedat_type            (completedAt, type)
+#   idx_createdat                   (createdAt)
+#   idx_last_update                 (last_update)
+#   idx_shopref_type_succeededat    (shopRef(10), type, succeededAt)
+#   idx_succeededat_type_provider   (succeededAt, type, provider)
+#   idx_terminalRef_type_succeededat(terminalRef(10), type, succeededAt)
+#   idx_updatedat                   (updatedAt)
+#   idx_userid                      (userId(20))
+_PAYMENT_SCHEMA = StructType(
+    [
+        StructField("createdAt", TimestampType(), True),
+        StructField("updatedAt", TimestampType(), True),
+        StructField("processedAt", TimestampType(), True),
+        StructField("balanceAfter", DecimalType(34, 4), True),
+        StructField("balanceAfterBonus", DecimalType(34, 4), True),
+        StructField("balanceAfterReal", DecimalType(34, 4), True),
+        StructField("balanceBefore", DecimalType(34, 4), True),
+        StructField("balanceBeforeBonus", DecimalType(34, 4), True),
+        StructField("balanceBeforeReal", DecimalType(34, 4), True),
+        StructField("balanceCurrencyCode", StringType(), True),
+        StructField("balancesBefore", StringType(), True),  # json
+        StructField("balancesAfter", StringType(), True),  # json
+        StructField("succeededAt", TimestampType(), True),
+        StructField("accountId", StringType(), True),
+        StructField("accountRef", StringType(), True),
+        StructField("amount", DecimalType(34, 4), True),
+        StructField("approverIds", StringType(), True),  # json
+        StructField("brandId", StringType(), True),
+        StructField("convertedAmount", DecimalType(34, 4), True),
+        StructField("convertedCurrencyCode", StringType(), True),
+        StructField("convertedFee", DecimalType(34, 4), True),
+        StructField("countryCode", StringType(), True),
+        StructField("creatorId", StringType(), True),
+        StructField("currencyCode", StringType(), True),
+        StructField("declineReason", StringType(), True),
+        StructField("declinedDepositId", StringType(), True),
+        StructField("device", StringType(), True),
+        StructField("errorMessage", StringType(), True),
+        StructField("fee", DecimalType(34, 4), True),
+        StructField("firstOfType", ByteType(), True),
+        StructField("gateway", StringType(), True),
+        StructField("gatewayAccount", StringType(), True),
+        StructField("initialProvider", StringType(), True),
+        StructField("ip", StringType(), True),
+        StructField("localeCode", StringType(), True),
+        StructField("method", StringType(), True),
+        StructField("paymentId", StringType(), False),  # PK
+        StructField("provider", StringType(), True),
+        StructField("pspRef", StringType(), True),
+        StructField("rate", DoubleType(), True),
+        StructField("redirectUri", StringType(), True),
+        StructField("ref", StringType(), True),
+        StructField("relatedPaymentId", StringType(), True),
+        StructField("selectedBonusCode", StringType(), True),
+        StructField("sessionId", StringType(), True),
+        StructField("status", StringType(), True),
+        StructField("statusCode", StringType(), True),
+        StructField("type", StringType(), True),
+        StructField("userAgent", StringType(), True),
+        StructField("userId", StringType(), True),
+        StructField("vipLevel", IntegerType(), True),
+        StructField("version", IntegerType(), True),
+        StructField("completedAt", TimestampType(), True),
+        StructField("links", StringType(), True),  # json
+        StructField("returnedById", StringType(), True),
+        StructField("shopRef", StringType(), True),
+        StructField("terminalRef", StringType(), True),
+        StructField("membercardNumber", StringType(), True),
+        StructField("migrationId", StringType(), True),
+        StructField("selectedShopItemIds", StringType(), True),
+        StructField("discardable", ByteType(), True),
+        StructField("amount_eur", DecimalType(34, 4), True),
+        StructField("amount_base", DecimalType(34, 4), True),
+        StructField("balanceAfter_eur", DecimalType(34, 4), True),
+        StructField("balanceAfter_base", DecimalType(34, 4), True),
+        StructField("balanceAfterBonus_eur", DecimalType(34, 4), True),
+        StructField("balanceAfterBonus_base", DecimalType(34, 4), True),
+        StructField("balanceAfterReal_eur", DecimalType(34, 4), True),
+        StructField("balanceAfterReal_base", DecimalType(34, 4), True),
+        StructField("balanceBefore_eur", DecimalType(34, 4), True),
+        StructField("balanceBefore_base", DecimalType(34, 4), True),
+        StructField("balanceBeforeBonus_eur", DecimalType(34, 4), True),
+        StructField("balanceBeforeBonus_base", DecimalType(34, 4), True),
+        StructField("balanceBeforeReal_eur", DecimalType(34, 4), True),
+        StructField("balanceBeforeReal_base", DecimalType(34, 4), True),
+        StructField("convertedAmount_eur", DecimalType(34, 4), True),
+        StructField("convertedAmount_base", DecimalType(34, 4), True),
+        StructField("convertedFee_eur", DecimalType(34, 4), True),
+        StructField("convertedFee_base", DecimalType(34, 4), True),
+        StructField("fee_eur", DecimalType(34, 4), True),
+        StructField("fee_base", DecimalType(34, 4), True),
+        StructField("last_update", TimestampType(), True),
+    ]
+)
+
+# ---------------------------------------------------------------------------
+# check
+# ---------------------------------------------------------------------------
+# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
+#   idx_createdat              (createdAt)
+#   idx_last_update            (last_update)
+#   idx_shopRef_createdat      (shopRef(6), createdAt)
+#   idx_updatedat              (updatedAt)
+# Talend upsert key: updatedAt — max(updatedAt) per checkId, srct.updatedAt > ch.updatedAt
+_CHECK_SCHEMA = StructType(
+    [
+        StructField("action", StringType(), True),
+        StructField("brandId", StringType(), True),
+        StructField("checkId", StringType(), False),  # PK
+        StructField("createdAt", TimestampType(), True),
+        StructField("details", StringType(), True),  # json
+        StructField("event", StringType(), True),
+        StructField("eventRef", StringType(), True),
+        StructField("processedAt", TimestampType(), True),
+        StructField("provider", StringType(), True),
+        StructField("ref", StringType(), True),
+        StructField("risk", StringType(), True),
+        StructField("shopRef", StringType(), True),
+        StructField("status", StringType(), True),
+        StructField("type", StringType(), True),
+        StructField("updatedAt", TimestampType(), True),
+        StructField("userId", StringType(), True),
+        StructField("discardable", ByteType(), True),
+        StructField("creatorId", StringType(), True),
+        StructField("last_update", TimestampType(), True),
+    ]
+)
+
+# ---------------------------------------------------------------------------
+# gameround
+# ---------------------------------------------------------------------------
+# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
+#   idx_createdat    (createdAt)
+#   idx_last_update  (last_update)
+#   idx_updatedat    (updatedAt)
+#   idx_version      (version)
+# Talend upsert key: version — MAX(version) per gameRoundId, srct.version > gr.version
+_GAMEROUND_SCHEMA = StructType(
+    [
+        StructField("createdAt", TimestampType(), True),
+        StructField("updatedAt", TimestampType(), True),
+        StructField("processedAt", TimestampType(), True),
+        StructField("availableBalancesAfter", StringType(), True),  # json
+        StructField("availableBalancesBefore", StringType(), True),  # json
+        StructField("balancesAfter", StringType(), True),  # json
+        StructField("balancesBefore", StringType(), True),  # json
+        StructField("betAmount", DecimalType(34, 4), True),
+        StructField("betCount", IntegerType(), True),
+        StructField("bonusBetAmount", DecimalType(34, 4), True),
+        StructField("bonusWinAmount", DecimalType(34, 4), True),
+        StructField("brandId", StringType(), True),
+        StructField("closed", ByteType(), True),
+        StructField("currencyCode", StringType(), True),
+        StructField("details", StringType(), True),  # json
+        StructField("finishedAt", TimestampType(), True),
+        StructField("gameId", StringType(), True),
+        StructField("gameRoundId", StringType(), False),  # PK
+        StructField("gameSessionId", StringType(), True),
+        StructField("manuallyClosed", ByteType(), True),
+        StructField("promotional", ByteType(), True),
+        StructField("provider", StringType(), True),
+        StructField("providerGameRoundId", StringType(), True),
+        StructField("providerGameSessionId", StringType(), True),
+        StructField("studio", StringType(), True),
+        StructField("syndicateSessionId", StringType(), True),
+        StructField("taxAmount", DecimalType(34, 4), True),
+        StructField("totalBalance", DecimalType(34, 4), True),
+        StructField("userId", StringType(), True),
+        StructField("walletCurrencyCode", StringType(), True),
+        StructField("winAmount", DecimalType(34, 4), True),
+        StructField("winBet", DecimalType(34, 4), True),
+        StructField("winCount", IntegerType(), True),
+        StructField("jackpotAmount", StringType(), True),  # stored as text in MySQL
+        StructField("jackpotContribution", StringType(), True),  # stored as text in MySQL
+        StructField("shopRef", StringType(), True),
+        StructField("terminalRef", StringType(), True),
+        StructField("discardable", ByteType(), True),
+        StructField("betAmount_eur", DecimalType(34, 4), True),
+        StructField("betAmount_base", DecimalType(34, 4), True),
+        StructField("bonusBetAmount_eur", DecimalType(34, 4), True),
+        StructField("bonusBetAmount_base", DecimalType(34, 4), True),
+        StructField("bonusWinAmount_eur", DecimalType(34, 4), True),
+        StructField("bonusWinAmount_base", DecimalType(34, 4), True),
+        StructField("taxAmount_eur", DecimalType(34, 4), True),
+        StructField("taxAmount_base", DecimalType(34, 4), True),
+        StructField("totalBalance_eur", DecimalType(34, 4), True),
+        StructField("totalBalance_base", DecimalType(34, 4), True),
+        StructField("winAmount_eur", DecimalType(34, 4), True),
+        StructField("winAmount_base", DecimalType(34, 4), True),
+        StructField("version", IntegerType(), True),
+        StructField("last_update", TimestampType(), True),
+    ]
+)
+
+# ---------------------------------------------------------------------------
 # Add further table schemas here following the same pattern:
 #
 # _WALLET_SCHEMA = StructType([...])
@@ -154,6 +565,27 @@ TABLE_CONFIGS: dict[str, TableConfig] = {
     "gametransaction": TableConfig(
         primary_key="gameTransactionId",
         schema=_GAMETRANSACTION_SCHEMA,
+        version_col="version",  # int version column — used for dedup ordering and merge condition
+    ),
+    "userdata": TableConfig(
+        primary_key="userId",
+        schema=_USERDATA_SCHEMA,
+        version_col="updatedAt",  # userdata has no version int; use updatedAt timestamp for dedup ordering
+    ),
+    "payment": TableConfig(
+        primary_key="paymentId",
+        schema=_PAYMENT_SCHEMA,
+        version_col="version",  # int version column — same pattern as gametransaction
+    ),
+    "check": TableConfig(
+        primary_key="checkId",
+        schema=_CHECK_SCHEMA,
+        version_col="updatedAt",  # no version int; use updatedAt timestamp — same pattern as userdata
+    ),
+    "gameround": TableConfig(
+        primary_key="gameRoundId",
+        schema=_GAMEROUND_SCHEMA,
+        version_col="version",  # int version column — same pattern as gametransaction
     ),
     # "wallet": TableConfig(primary_key="walletId", schema=_WALLET_SCHEMA),
     # "playersession": TableConfig(primary_key="playerSessionId", schema=_PLAYERSESSION_SCHEMA),
