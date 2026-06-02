@@ -25,8 +25,7 @@ def spark():
             os.environ["PYSPARK_PYTHON"] = sys.executable
 
             spark = (
-                SparkSession.builder
-                .master("local[2]")
+                SparkSession.builder.master("local[2]")
                 .appName("pytest-local-pyspark")
                 .config("spark.sql.session.timeZone", "UTC")
                 .getOrCreate()
