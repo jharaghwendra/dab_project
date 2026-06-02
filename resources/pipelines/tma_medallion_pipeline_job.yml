@@ -1,0 +1,148 @@
+resources:
+  jobs:
+    tma_medallion_bronze_silver_de:
+      name: "TMA Medallion Bronze and Silver DE"
+      max_concurrent_runs: 1
+      # schedule:
+      #   quartz_cron_expression: "0 */10 * * * ?"
+      #   timezone_id: "UTC"
+      #   pause_status: "UNPAUSED"
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+            dependencies:
+              - ../../dist/dab_project-0.0.2-py3-none-any.whl
+      tasks:
+        - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../dab_project/__init__.py"
+            parameters: []
+            source: WORKSPACE
+        - task_key: "bronze_gametransaction_de"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "de"
+              - "--table_name"
+              - "gametransaction"
+            source: WORKSPACE
+        - task_key: "silver_gametransaction_de"
+          depends_on:
+            - task_key: "bronze_gametransaction_de"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "de"
+              - "--table_name"
+              - "gametransaction"
+            source: WORKSPACE
+
+    tma_medallion_bronze_silver_at:
+      name: "TMA Medallion Bronze and Silver AT"
+      max_concurrent_runs: 1
+      # schedule:
+      #   quartz_cron_expression: "0 */10 * * * ?"
+      #   timezone_id: "UTC"
+      #   pause_status: "UNPAUSED"
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+            dependencies:
+              - ../../dist/dab_project-0.0.2-py3-none-any.whl
+      tasks:
+        - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../dab_project/__init__.py"
+            parameters: []
+            source: WORKSPACE
+        - task_key: "bronze_gametransaction_at"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "at"
+              - "--table_name"
+              - "gametransaction"
+            source: WORKSPACE
+        - task_key: "silver_gametransaction_at"
+          depends_on:
+            - task_key: "bronze_gametransaction_at"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "at"
+              - "--table_name"
+              - "gametransaction"
+            source: WORKSPACE
+
+    tma_medallion_bronze_silver_dk:
+      name: "TMA Medallion Bronze and Silver DK"
+      max_concurrent_runs: 1
+      # schedule:
+      #   quartz_cron_expression: "0 */10 * * * ?"
+      #   timezone_id: "UTC"
+      #   pause_status: "UNPAUSED"
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+            dependencies:
+              - ../../dist/dab_project-0.0.2-py3-none-any.whl
+      tasks:
+        - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../dab_project/__init__.py"
+            parameters: []
+            source: WORKSPACE
+        - task_key: "bronze_gametransaction_dk"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "dk"
+              - "--table_name"
+              - "gametransaction"
+            source: WORKSPACE
+        - task_key: "silver_gametransaction_dk"
+          depends_on:
+            - task_key: "bronze_gametransaction_dk"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "dk"
+              - "--table_name"
+              - "gametransaction"
+            source: WORKSPACE
