@@ -52,6 +52,12 @@ scratch/**
 .github/agents/
 
 # -----------------------------------------------------------------------
+# Root-level dab_project/ folder — local dummy wheel task script only.
+# The proper package is src/dab_project/. Job YAML points to src/.
+# -----------------------------------------------------------------------
+/dab_project/
+
+# -----------------------------------------------------------------------
 # Exploration notebooks — ad-hoc, not production code
 # -----------------------------------------------------------------------
 **/explorations/**

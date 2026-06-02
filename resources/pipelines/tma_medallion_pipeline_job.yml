@@ -17,7 +17,7 @@ resources:
         - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../dab_project/__init__.py"
+            python_file: "../../src/dab_project/__init__.py"
             parameters: []
             source: WORKSPACE
         - task_key: "bronze_gametransaction_de"
@@ -66,7 +66,7 @@ resources:
         - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../dab_project/__init__.py"
+            python_file: "../../src/dab_project/__init__.py"
             parameters: []
             source: WORKSPACE
         - task_key: "bronze_gametransaction_at"
@@ -115,7 +115,7 @@ resources:
         - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../dab_project/__init__.py"
+            python_file: "../../src/dab_project/__init__.py"
             parameters: []
             source: WORKSPACE
         - task_key: "bronze_gametransaction_dk"
