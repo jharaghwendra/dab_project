@@ -35,6 +35,7 @@ if not country:
 _table_config = get_table_config(table_name)
 primary_key = _table_config.primary_key
 mysql_strict_schema = _table_config.schema
+version_col = _table_config.version_col
 
 
 # Plain Python counter (list for closure mutability — sparkContext.accumulator not supported on serverless)
@@ -59,7 +60,7 @@ def process_micro_batch(micro_batch_df, batch_id, current_country):
     ]
 
     # Isolate memory partitions to deduplicate the 10-minute micro-batch data footprint
-    window_spec = Window.partitionBy(primary_key).orderBy(col("version").desc())
+    window_spec = Window.partitionBy(primary_key).orderBy(col(version_col).desc())
 
     clean_updates_df = (
         micro_batch_df.withColumn("row_num", row_number().over(window_spec))
@@ -100,8 +101,8 @@ def process_micro_batch(micro_batch_df, batch_id, current_country):
             clean_updates_df.alias("source"),
             f"target.{primary_key} = source.{primary_key} AND target.country_code = source.country_code",
         )
-        # Match condition replacement for your Talend: ON DUPLICATE KEY UPDATE
-        .whenMatchedUpdate(condition="source.version > target.version", set=update_mapping)
+        # Match condition replacement for your Talend: ON DUPLICATE KEY UPDATE (srct.updatedAt > u.updatedAt)
+        .whenMatchedUpdate(condition=f"source.{version_col} > target.{version_col}", set=update_mapping)
         # Insertion tracking rules for completely brand new entities
         .whenNotMatchedInsert(values=update_mapping)
         .execute()

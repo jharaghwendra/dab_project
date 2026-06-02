@@ -12,7 +12,7 @@ resources:
           spec:
             environment_version: "2"
             dependencies:
-              - ../../dist/dab_project-0.0.2-py3-none-any.whl
+              - ../../dist/dab_project-0.0.6-py3-none-any.whl
       tasks:
         - task_key: "00_wheel_task"
           environment_key: default
@@ -48,6 +48,118 @@ resources:
               - "--table_name"
               - "gametransaction"
             source: WORKSPACE
+        - task_key: "bronze_userdata_de"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "de"
+              - "--table_name"
+              - "userdata"
+            source: WORKSPACE
+        - task_key: "silver_userdata_de"
+          depends_on:
+            - task_key: "bronze_userdata_de"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "de"
+              - "--table_name"
+              - "userdata"
+            source: WORKSPACE
+        - task_key: "bronze_payment_de"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "de"
+              - "--table_name"
+              - "payment"
+            source: WORKSPACE
+        - task_key: "silver_payment_de"
+          depends_on:
+            - task_key: "bronze_payment_de"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "de"
+              - "--table_name"
+              - "payment"
+            source: WORKSPACE
+        - task_key: "bronze_check_de"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "de"
+              - "--table_name"
+              - "check"
+            source: WORKSPACE
+        - task_key: "silver_check_de"
+          depends_on:
+            - task_key: "bronze_check_de"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "de"
+              - "--table_name"
+              - "check"
+            source: WORKSPACE
+        - task_key: "bronze_gameround_de"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "de"
+              - "--table_name"
+              - "gameround"
+            source: WORKSPACE
+        - task_key: "silver_gameround_de"
+          depends_on:
+            - task_key: "bronze_gameround_de"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "de"
+              - "--table_name"
+              - "gameround"
+            source: WORKSPACE
 
     tma_medallion_bronze_silver_at:
       name: "TMA Medallion Bronze and Silver AT"
@@ -61,7 +173,7 @@ resources:
           spec:
             environment_version: "2"
             dependencies:
-              - ../../dist/dab_project-0.0.2-py3-none-any.whl
+              - ../../dist/dab_project-0.0.6-py3-none-any.whl
       tasks:
         - task_key: "00_wheel_task"
           environment_key: default
@@ -97,6 +209,118 @@ resources:
               - "--table_name"
               - "gametransaction"
             source: WORKSPACE
+        - task_key: "bronze_userdata_at"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "at"
+              - "--table_name"
+              - "userdata"
+            source: WORKSPACE
+        - task_key: "silver_userdata_at"
+          depends_on:
+            - task_key: "bronze_userdata_at"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "at"
+              - "--table_name"
+              - "userdata"
+            source: WORKSPACE
+        - task_key: "bronze_payment_at"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "at"
+              - "--table_name"
+              - "payment"
+            source: WORKSPACE
+        - task_key: "silver_payment_at"
+          depends_on:
+            - task_key: "bronze_payment_at"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "at"
+              - "--table_name"
+              - "payment"
+            source: WORKSPACE
+        - task_key: "bronze_check_at"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "at"
+              - "--table_name"
+              - "check"
+            source: WORKSPACE
+        - task_key: "silver_check_at"
+          depends_on:
+            - task_key: "bronze_check_at"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "at"
+              - "--table_name"
+              - "check"
+            source: WORKSPACE
+        - task_key: "bronze_gameround_at"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "at"
+              - "--table_name"
+              - "gameround"
+            source: WORKSPACE
+        - task_key: "silver_gameround_at"
+          depends_on:
+            - task_key: "bronze_gameround_at"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "at"
+              - "--table_name"
+              - "gameround"
+            source: WORKSPACE
 
     tma_medallion_bronze_silver_dk:
       name: "TMA Medallion Bronze and Silver DK"
@@ -110,7 +334,7 @@ resources:
           spec:
             environment_version: "2"
             dependencies:
-              - ../../dist/dab_project-0.0.2-py3-none-any.whl
+              - ../../dist/dab_project-0.0.6-py3-none-any.whl
       tasks:
         - task_key: "00_wheel_task"
           environment_key: default
@@ -145,4 +369,116 @@ resources:
               - "dk"
               - "--table_name"
               - "gametransaction"
+            source: WORKSPACE
+        - task_key: "bronze_userdata_dk"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "dk"
+              - "--table_name"
+              - "userdata"
+            source: WORKSPACE
+        - task_key: "silver_userdata_dk"
+          depends_on:
+            - task_key: "bronze_userdata_dk"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "dk"
+              - "--table_name"
+              - "userdata"
+            source: WORKSPACE
+        - task_key: "bronze_payment_dk"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "dk"
+              - "--table_name"
+              - "payment"
+            source: WORKSPACE
+        - task_key: "silver_payment_dk"
+          depends_on:
+            - task_key: "bronze_payment_dk"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "dk"
+              - "--table_name"
+              - "payment"
+            source: WORKSPACE
+        - task_key: "bronze_check_dk"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "dk"
+              - "--table_name"
+              - "check"
+            source: WORKSPACE
+        - task_key: "silver_check_dk"
+          depends_on:
+            - task_key: "bronze_check_dk"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "dk"
+              - "--table_name"
+              - "check"
+            source: WORKSPACE
+        - task_key: "bronze_gameround_dk"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "dk"
+              - "--table_name"
+              - "gameround"
+            source: WORKSPACE
+        - task_key: "silver_gameround_dk"
+          depends_on:
+            - task_key: "bronze_gameround_dk"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "dk"
+              - "--table_name"
+              - "gameround"
             source: WORKSPACE
