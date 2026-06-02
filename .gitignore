@@ -47,6 +47,11 @@ scratch/**
 !scratch/README.md
 
 # -----------------------------------------------------------------------
+# GitHub Copilot agent customization files — machine/user-specific
+# -----------------------------------------------------------------------
+.github/agents/
+
+# -----------------------------------------------------------------------
 # Exploration notebooks — ad-hoc, not production code
 # -----------------------------------------------------------------------
 **/explorations/**
