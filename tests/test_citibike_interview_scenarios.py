@@ -62,11 +62,14 @@ def test_03_trip_duration_negative_if_end_before_start(spark):
 
 def test_04_timestamp_to_date_extracts_calendar_day(spark):
     # Baby idea: keep only the date part from timestamp.
-    # Input looks like: [2025-04-10 22:45:00, 2025-04-11 00:05:00]
+    # Input looks like: [2025-04-10 22:45:00 UTC, 2025-04-11 00:05:00 UTC]
     # Expected output looks like: [2025-04-10, 2025-04-11]
+    # UTC-aware datetimes ensure Arrow serialises the exact UTC epoch regardless
+    # of the client machine's local timezone (e.g. Vienna UTC+2).
+    tz = datetime.timezone.utc
     data = [
-        (datetime.datetime(2025, 4, 10, 22, 45, 0),),
-        (datetime.datetime(2025, 4, 11, 0, 5, 0),),
+        (datetime.datetime(2025, 4, 10, 22, 45, 0, tzinfo=tz),),
+        (datetime.datetime(2025, 4, 11, 0, 5, 0, tzinfo=tz),),
     ]
     df = spark.createDataFrame(data, "started_at timestamp")
 

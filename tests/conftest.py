@@ -24,7 +24,13 @@ def spark():
             os.environ.pop("SPARK_REMOTE", None)
             os.environ["PYSPARK_PYTHON"] = sys.executable
 
-            spark = SparkSession.builder.master("local[2]").appName("pytest-local-pyspark").getOrCreate()
+            spark = (
+                SparkSession.builder
+                .master("local[2]")
+                .appName("pytest-local-pyspark")
+                .config("spark.sql.session.timeZone", "UTC")
+                .getOrCreate()
+            )
             is_local_spark = True
         except Exception as exc:
             raise ImportError("Neither Databricks Session nor local Spark Session is available") from exc
