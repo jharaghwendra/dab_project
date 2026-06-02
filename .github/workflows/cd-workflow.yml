@@ -27,7 +27,10 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install --upgrade pip
-          pip install setuptools wheel
+          pip install uv setuptools wheel
+
+      - name: Build wheel
+        run: uv build --wheel
 
       - name: Configure Databricks
         run: |
@@ -67,7 +70,10 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install --upgrade pip
-          pip install setuptools wheel
+          pip install uv setuptools wheel
+
+      - name: Build wheel
+        run: uv build --wheel
 
       - name: Configure Databricks
         run: |
