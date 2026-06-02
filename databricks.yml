@@ -11,10 +11,16 @@ include:
 variables:
   catalog:
     description: The catalog to use
-    default: "citibike_dev"
+    default: "tma_dev"
   dev_flag:
     description: A flag to indicate if the environment is development
     default: true
+  gaming_tables:
+    description: List of gaming tables for ingestion
+    default: []
+  countries:
+    description: List of countries for TMA ingestion
+    default: []
 
 targets:
   dev:
@@ -29,6 +35,17 @@ targets:
     workspace:
       host: https://dbc-71b2b101-72ab.cloud.databricks.com
       profile: DEFAULT
+    variables:
+      countries: ["de", "at", "dk"]
+      catalog: "tma_dev"
+      gaming_tables: [
+        "account", "bonusaggregate", "brandgame", "campaign", "check",
+        "communicationaggregate", "documentaggregate", "game", "gameround",
+        "gamesession", "gametransaction", "kycuseraggregate", "lock",
+        "payment", "paymentledgerentry", "remarkaggregate", "session",
+        "tag", "useraggregate", "userbonus", "userdata", "userlimit",
+        "userlimitcap", "userlimitexceeded", "wallet", "walletbalancechange"
+      ]
   test:
     mode: production
     presets:
@@ -38,7 +55,8 @@ targets:
       profile: test
       root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
     variables:
-      catalog: "citibike_test"
+      catalog: "tma_dev"
+      countries: ["de", "at", "dk"]
       dev_flag: false
     permissions:
       - service_principal_name: 5c03746d-65e1-48bc-af57-474fe2e8ed3c
@@ -52,7 +70,8 @@ targets:
       profile: prod
       root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
     variables:
-      catalog: "citibike_prod"
+      catalog: "tma_prod"
+      countries: ["de", "at", "dk"]
       dev_flag: false
     permissions:
       - service_principal_name:  8ca0d003-42ad-44eb-b0ef-2112862316b2

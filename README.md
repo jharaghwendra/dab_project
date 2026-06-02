@@ -1,3 +1,41 @@
+# Gaming Lakehouse Project (iGaming Data Migration)
+
+This project demonstrates a modern Lakehouse architecture for real-world iGaming data, migrated from an on-premise Talend/MySQL stack to Databricks using the Medallion (Bronze-Silver-Gold) pattern.
+
+### Folder Structure
+
+```
+gaming_lakehouse/
+└── scripts/
+    ├── 01_bronze/      # Ingestion scripts (Auto Loader from S3 to Bronze)
+    ├── 02_silver/      # Deduplication & current-state scripts (Bronze → Silver)
+    └── 03_gold_dbt/    # dbt models for Gold layer (star schema, marts)
+```
+
+### End-to-End Execution Flow
+
+- **Job 1: DE (Germany)**
+- **Job 2: AT (Austria)**
+- **Job 3: DK (Denmark)**
+
+Each job runs every 10 minutes and processes 26 tables in parallel:
+
+| Stage         | Task Example                | Dependency                |
+|---------------|----------------------------|---------------------------|
+| Bronze        | bronze_wallet              | None (starts at 0s)       |
+| Silver        | silver_wallet              | Waits for bronze_wallet   |
+| ...           | ...                        | ...                       |
+| Bronze        | bronze_gametransaction     | None (starts at 0s)       |
+| Silver        | silver_gametransaction     | Waits for bronze_gametransaction |
+| ...           | ...                        | ...                       |
+
+This pattern repeats for all 26 tables per country. Each Bronze task ingests raw Parquet data from S3, and each Silver task deduplicates and merges the latest versioned records.
+
+### Gold Layer
+
+- Gold models (star schema, marts, reporting tables) are built using dbt and Databricks Serverless SQL Warehouse, consuming the Silver layer as source.
+
+--- --------------------------------------------------------------------------------------------------------------
 # dab_project — Citibike ETL Lakehouse (Databricks Asset Bundle)
 
 A Databricks Asset Bundle (DAB) project implementing a Bronze-Silver-Gold Medallion
