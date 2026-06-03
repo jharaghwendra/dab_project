@@ -35,7 +35,7 @@ jobs:
 
       - name: 'Run Pytests and generate coverage report'
         run: |
-          uv run pytest --disable-warnings --cov \
+          uv run --no-sync pytest --disable-warnings --cov \
             --cov-report=term-missing \
             --cov-report=html
 
