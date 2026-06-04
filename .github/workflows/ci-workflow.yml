@@ -31,11 +31,11 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: 'Install dependencies'
-        run: uv sync --group ci --frozen
+        run: uv sync --group ci --no-dev --frozen
 
       - name: 'Run Pytests and generate coverage report'
         run: |
-          uv run pytest --disable-warnings --cov \
+          uv run --no-sync pytest --disable-warnings --cov \
             --cov-report=term-missing \
             --cov-report=html
 

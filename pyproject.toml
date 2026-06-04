@@ -39,3 +39,6 @@ packages = ["src/citibike", "src/utils", "src/gaming_lakehouse"]
 
 [tool.ruff]
 line-length = 120
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

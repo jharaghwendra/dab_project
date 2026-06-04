@@ -3,6 +3,14 @@
 bundle:
   name: dab_project
 
+# Explicit artifact declaration — prevents DAB from auto-detecting setup.py.
+# The wheel is built externally via `uv build --wheel` before `databricks bundle deploy` runs.
+artifacts:
+  default:
+    type: whl
+    build: "uv build --wheel"
+    path: "."
+
 include:
   - resources/jobs/*.yml
   - resources/pipelines/*.yml

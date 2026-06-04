@@ -30,9 +30,6 @@ jobs:
       - name: Install Databricks CLI
         run: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
 
-      - name: Build wheel
-        run: uv build --wheel
-
       - name: Configure Databricks
         run: |
           # write out the profile (here called "test")
@@ -73,9 +70,6 @@ jobs:
 
       - name: Install Databricks CLI
         run: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
-
-      - name: Build wheel
-        run: uv build --wheel
 
       - name: Configure Databricks
         run: |
