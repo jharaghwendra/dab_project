@@ -7,7 +7,7 @@ resources:
           spec:
             environment_version: "2"
             dependencies:
-              - ../../dist/dab_project-0.0.6-py3-none-any.whl
+              - ../../dist/dab_project-${var.wheel_version}-py3-none-any.whl
       tasks:
         - task_key: 00_wheel_task
           python_wheel_task:
