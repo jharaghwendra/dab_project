@@ -1,0 +1,66 @@
+[0m11:59:04.632542 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000154455046E0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001544828BE60>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000154482CF8F0>]}
+
+
+============================== 11:59:04.644516 | cfe0c975-c948-400d-99c6-5702f0ac61f5 ==============================
+[0m11:59:04.644516 [info ] [MainThread]: Running with dbt=1.11.8
+[0m11:59:04.644516 [debug] [MainThread]: running dbt with arguments {'version_check': 'True', 'no_print': 'None', 'static_parser': 'True', 'target_path': 'None', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'profiles_dir': 'C:\\Users\\r.jha\\.dbt', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'partial_parse': 'True', 'indirect_selection': 'eager', 'invocation_command': 'dbt init dbt_gold', 'use_colors': 'True', 'use_experimental_parser': 'False', 'log_path': 'logs'}
+[0m11:59:04.667906 [info ] [MainThread]: A project called dbt_gold already exists here.
+[0m11:59:04.667906 [debug] [MainThread]: Command `dbt init` succeeded at 11:59:04.667906 after 0.24 seconds
+[0m11:59:04.667906 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001544768DBE0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000015444BF49B0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000154487D36B0>]}
+[0m11:59:04.667906 [debug] [MainThread]: Flushing usage events
+[0m11:59:05.511342 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m11:59:47.793889 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000292F0F821B0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000292F0F82B10>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000292F0F80680>]}
+
+
+============================== 11:59:47.809528 | 8aac2ecd-6399-4d44-ac7e-ed8d805a5476 ==============================
+[0m11:59:47.809528 [info ] [MainThread]: Running with dbt=1.11.8
+[0m11:59:47.809528 [debug] [MainThread]: running dbt with arguments {'static_parser': 'True', 'no_print': 'None', 'version_check': 'True', 'target_path': 'None', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'fail_fast': 'False', 'debug': 'False', 'log_format': 'default', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': 'C:\\Users\\r.jha\\.dbt', 'indirect_selection': 'eager', 'invocation_command': 'dbt init dbt_gold', 'use_colors': 'True', 'use_experimental_parser': 'False', 'log_path': 'logs'}
+[0m11:59:47.835961 [debug] [MainThread]: Starter project path: C:\raghav-data\Data-Eng\Databricks\Udemy-Databricks-Asset-Bundle\dab_project\.venv_dbc\Lib\site-packages\dbt\include\starter_project
+[0m11:59:47.876762 [info ] [MainThread]: 
+Your new dbt project "dbt_gold" was created!
+
+For more information on how to configure the profiles.yml file,
+please consult the dbt documentation here:
+
+  https://docs.getdbt.com/docs/configure-your-profile
+
+One more thing:
+
+Need help? Don't hesitate to reach out to us via GitHub issues or on Slack:
+
+  https://community.getdbt.com/
+
+Happy modeling!
+
+[0m11:59:47.876762 [info ] [MainThread]: Setting up your profile.
+[0m12:00:04.187862 [debug] [MainThread]: Spark adapter: Setting pyhive.hive logging to ERROR
+[0m12:00:04.187862 [debug] [MainThread]: Spark adapter: Setting thrift.transport logging to ERROR
+[0m12:00:04.187862 [debug] [MainThread]: Spark adapter: Setting thrift.protocol logging to ERROR
+[0m12:03:49.809001 [info ] [MainThread]: Profile dbt_gold written to C:\Users\r.jha\.dbt\profiles.yml using target's profile_template.yml and your supplied values. Run 'dbt debug' to validate the connection.
+[0m12:03:49.809001 [debug] [MainThread]: Command `dbt init` succeeded at 12:03:49.809001 after 242.21 seconds
+[0m12:03:49.809001 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000292A2271040>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000292A1FDC800>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000292A1AA7620>]}
+[0m12:03:49.809001 [debug] [MainThread]: Flushing usage events
+[0m12:03:50.598278 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m12:10:53.187677 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000231AB63D370>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000231AAF77B30>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000231AAF77BF0>]}
+
+
+============================== 12:10:53.191204 | 48a6c6ca-fb73-4249-afb6-511a75c6ba66 ==============================
+[0m12:10:53.191204 [info ] [MainThread]: Running with dbt=1.11.8
+[0m12:10:53.191204 [debug] [MainThread]: running dbt with arguments {'static_parser': 'True', 'no_print': 'None', 'version_check': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'target_path': 'None', 'printer_width': '80', 'write_json': 'True', 'introspect': 'True', 'log_cache_events': 'False', 'empty': 'None', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': 'C:\\Users\\r.jha\\.dbt', 'indirect_selection': 'eager', 'invocation_command': 'dbt debug', 'use_colors': 'True', 'use_experimental_parser': 'False', 'log_path': 'logs'}
+[0m12:10:53.210110 [info ] [MainThread]: dbt version: 1.11.8
+[0m12:10:53.210110 [info ] [MainThread]: python version: 3.12.10
+[0m12:10:53.210110 [info ] [MainThread]: python path: C:\raghav-data\Data-Eng\Databricks\Udemy-Databricks-Asset-Bundle\dab_project\.venv_dbc\Scripts\python.exe
+[0m12:10:53.210110 [info ] [MainThread]: os info: Windows-11-10.0.22631-SP0
+[0m12:10:53.985772 [debug] [MainThread]: Spark adapter: Setting pyhive.hive logging to ERROR
+[0m12:10:53.986773 [debug] [MainThread]: Spark adapter: Setting thrift.transport logging to ERROR
+[0m12:10:53.986773 [debug] [MainThread]: Spark adapter: Setting thrift.protocol logging to ERROR
+[0m12:10:54.719294 [info ] [MainThread]: Using profiles dir at C:\Users\r.jha\.dbt
+[0m12:10:54.719294 [info ] [MainThread]: Using profiles.yml file at C:\Users\r.jha\.dbt\profiles.yml
+[0m12:10:54.719294 [info ] [MainThread]: Using dbt_project.yml file at C:\raghav-data\Data-Eng\Databricks\Udemy-Databricks-Asset-Bundle\dab_project\dbt_project.yml
+[0m12:10:54.719294 [error] [MainThread]: Encountered an error:
+Internal Error
+  Profile should not be None if loading profile completed
+[0m12:10:54.719294 [debug] [MainThread]: Command `dbt debug` failed at 12:10:54.719294 after 1.67 seconds
+[0m12:10:54.719294 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000231AAF25340>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000231A552ED80>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000231DB226510>]}
+[0m12:10:54.719294 [debug] [MainThread]: Flushing usage events
+[0m12:10:55.501089 [debug] [MainThread]: An error was encountered while trying to flush usage events
