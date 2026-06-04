@@ -17,6 +17,9 @@ include:
 
 # Variable declarations. These variables are assigned in the dev/prod targets below.
 variables:
+  wheel_version:
+    description: Python package version — must match pyproject.toml. Updated automatically by CD pipeline.
+    default: "0.0.7"
   catalog:
     description: The catalog to use
     default: "tma_dev"
