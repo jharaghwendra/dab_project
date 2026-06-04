@@ -1,0 +1,38 @@
+version: 2
+
+sources:
+  - name: silver
+    database: "{{ target.catalog }}"
+    schema: silver
+    description: "Clean, deduplicated, strict-typed tables upserted by PySpark (Bronze → Silver layer)"
+
+    tables:
+      - name: gametransaction
+        description: "One row per game transaction event. Deduplicated and upserted on gameTransactionId."
+        columns:
+          - name: gameTransactionId
+            description: "Primary key — unique transaction identifier"
+
+      - name: userdata
+        description: "One row per player (latest state). Upserted on userId."
+        columns:
+          - name: userId
+            description: "Primary key — unique player identifier"
+
+      - name: payment
+        description: "One row per payment event. Upserted on paymentId."
+        columns:
+          - name: paymentId
+            description: "Primary key — unique payment identifier"
+
+      - name: check
+        description: "One row per compliance check event. Upserted on checkId."
+        columns:
+          - name: checkId
+            description: "Primary key — unique check identifier"
+
+      - name: gameround
+        description: "One row per game round. Upserted on gameRoundId."
+        columns:
+          - name: gameRoundId
+            description: "Primary key — unique game round identifier"

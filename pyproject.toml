@@ -18,6 +18,8 @@ dev = [
     "databricks-dlt",
     "databricks-connect>=15.4,<15.5",
     "ipykernel",
+    "dbt-core>=1.11.11",
+    "dbt-databricks>=1.10.9",
 ]
 ci = [
     "pyspark==4.1.2",
