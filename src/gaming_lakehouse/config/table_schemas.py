@@ -557,6 +557,133 @@ _GAMEROUND_SCHEMA = StructType(
 # _PLAYERSESSION_SCHEMA = StructType([...])
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# game
+# ---------------------------------------------------------------------------
+# MySQL indexes: idx_createdat (createdAt), idx_updatedat (updatedAt), idx_last_update (last_update)
+# Upsert key: version (text in MySQL but treated as dedup signal — updatedAt used instead)
+_GAME_SCHEMA = StructType(
+    [
+        StructField("createdAt", TimestampType(), True),
+        StructField("updatedAt", TimestampType(), True),
+        StructField("processedAt", TimestampType(), True),
+        StructField("allowedWalletType", StringType(), True),
+        StructField("bonusGame", ByteType(), True),
+        StructField("bonusHitFrequency", StringType(), True),
+        StructField("branded", ByteType(), True),
+        StructField("class", StringType(), True),
+        StructField("enabled", ByteType(), True),
+        StructField("features", StringType(), True),  # JSON stored as string
+        StructField("freeGames", ByteType(), True),
+        StructField("gamble", ByteType(), True),
+        StructField("gameId", StringType(), False),  # PK
+        StructField("height", IntegerType(), True),
+        StructField("jackpotId", StringType(), True),
+        StructField("layout", StringType(), True),
+        StructField("live", ByteType(), True),
+        StructField("loginRequired", ByteType(), True),
+        StructField("maxBet", StringType(), True),
+        StructField("maxCoins", IntegerType(), True),
+        StructField("maxLines", StringType(), True),
+        StructField("maxPayout", StringType(), True),
+        StructField("minBet", StringType(), True),
+        StructField("name", StringType(), True),
+        StructField("progressiveJackpot", ByteType(), True),
+        StructField("reelsRows", StringType(), True),
+        StructField("releasedAt", TimestampType(), True),
+        StructField("restrictedCountries", StringType(), True),  # JSON stored as string
+        StructField("restrictedJurisdictions", StringType(), True),  # JSON stored as string
+        StructField("rtp", StringType(), True),
+        StructField("slug", StringType(), True),
+        StructField("studio", StringType(), True),
+        StructField("tableId", StringType(), True),
+        StructField("tags", StringType(), True),  # JSON stored as string
+        StructField("tcUpdatedAt", TimestampType(), True),
+        StructField("type", StringType(), True),
+        StructField("version", StringType(), True),  # text in MySQL — not an int version
+        StructField("vertical", StringType(), True),
+        StructField("volatility", StringType(), True),
+        StructField("wageringCoefficient", StringType(), True),
+        StructField("width", IntegerType(), True),
+        StructField("complianceDetails", StringType(), True),
+        StructField("freeGamesFixedAmount", ByteType(), True),
+        StructField("private", ByteType(), True),
+        StructField("videoThumbnail", ByteType(), True),
+        StructField("discardable", ByteType(), True),
+        StructField("last_update", TimestampType(), True),
+    ]
+)
+
+
+# ---------------------------------------------------------------------------
+# brandgame
+# ---------------------------------------------------------------------------
+# Brand-specific configuration layer on top of game.
+# One brandgame row per (brand, game) combination.
+# brandgame.gameId (text FK) → game.gameId
+# MySQL indexes: idx_createdat (createdAt), idx_updatedat (updatedAt), idx_last_update (last_update)
+_BRANDGAME_SCHEMA = StructType(
+    [
+        StructField("createdAt", TimestampType(), True),
+        StructField("updatedAt", TimestampType(), True),
+        StructField("processedAt", TimestampType(), True),
+        StructField("allowedWalletType", StringType(), True),
+        StructField("bonusGame", ByteType(), True),
+        StructField("bonusHitFrequency", StringType(), True),
+        StructField("branded", ByteType(), True),
+        StructField("class", StringType(), True),
+        StructField("enabled", ByteType(), True),
+        StructField("features", StringType(), True),  # JSON stored as string
+        StructField("freeGames", ByteType(), True),
+        StructField("gamble", ByteType(), True),
+        StructField("brandGameId", StringType(), False),  # PK
+        StructField("height", IntegerType(), True),
+        StructField("jackpotId", StringType(), True),
+        StructField("layout", StringType(), True),
+        StructField("live", ByteType(), True),
+        StructField("loginRequired", ByteType(), True),
+        StructField("maxBet", StringType(), True),
+        StructField("maxCoins", IntegerType(), True),
+        StructField("maxLines", StringType(), True),
+        StructField("maxPayout", StringType(), True),
+        StructField("minBet", StringType(), True),
+        StructField("name", StringType(), True),
+        StructField("progressiveJackpot", ByteType(), True),
+        StructField("reelsRows", StringType(), True),
+        StructField("releasedAt", TimestampType(), True),
+        StructField("restrictedCountries", StringType(), True),  # JSON stored as string
+        StructField("restrictedJurisdictions", StringType(), True),  # JSON stored as string
+        StructField("rtp", StringType(), True),
+        StructField("slug", StringType(), True),
+        StructField("studio", StringType(), True),
+        StructField("tableId", StringType(), True),
+        StructField("tags", StringType(), True),  # JSON stored as string
+        StructField("tcUpdatedAt", TimestampType(), True),
+        StructField("type", StringType(), True),
+        StructField("version", StringType(), True),  # text in MySQL — not an int version
+        StructField("vertical", StringType(), True),
+        StructField("volatility", StringType(), True),
+        StructField("wageringCoefficient", StringType(), True),
+        StructField("width", IntegerType(), True),
+        StructField("enabledAt", TimestampType(), True),
+        StructField("disabledAt", TimestampType(), True),
+        StructField("firstEnabledAt", TimestampType(), True),
+        StructField("complianceDetails", StringType(), True),
+        StructField("freeGamesFixedAmount", ByteType(), True),
+        StructField("gameEnabled", ByteType(), True),
+        StructField("gameId", StringType(), True),  # FK → game.gameId
+        StructField("gameProviderId", StringType(), True),
+        StructField("gameRestrictedCountries", StringType(), True),
+        StructField("gameRestrictedJurisdictions", StringType(), True),
+        StructField("gameSettingsAvailable", ByteType(), True),
+        StructField("jurisdictionRtpLevels", StringType(), True),
+        StructField("privateStatus", StringType(), True),
+        StructField("resellerOrganizationId", StringType(), True),
+        StructField("discardable", ByteType(), True),
+        StructField("assets", StringType(), True),
+        StructField("last_update", TimestampType(), True),
+    ]
+)
 
 # ---------------------------------------------------------------------------
 # Central registry — the only place the silver script reads from
@@ -586,6 +713,16 @@ TABLE_CONFIGS: dict[str, TableConfig] = {
         primary_key="gameRoundId",
         schema=_GAMEROUND_SCHEMA,
         version_col="version",  # int version column — same pattern as gametransaction
+    ),
+    "game": TableConfig(
+        primary_key="gameId",
+        schema=_GAME_SCHEMA,
+        version_col="updatedAt",  # version col in MySQL is text (not int) — use updatedAt for dedup ordering
+    ),
+    "brandgame": TableConfig(
+        primary_key="brandGameId",
+        schema=_BRANDGAME_SCHEMA,
+        version_col="updatedAt",  # version col is text (not int) — use updatedAt for dedup ordering
     ),
     # "wallet": TableConfig(primary_key="walletId", schema=_WALLET_SCHEMA),
     # "playersession": TableConfig(primary_key="playerSessionId", schema=_PLAYERSESSION_SCHEMA),

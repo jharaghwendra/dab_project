@@ -6,7 +6,7 @@
   This lets BI reports filter by timezone without doing any conversion at query time.
 
   Materialization : table  (full rebuild on each dbt run)
-  Primary key     : (date_time_key, timezone)
+  Primary key     : (sk_date_time, timezone)
   Key format      : YYYYMMDDHH in LOCAL time for that timezone row
 */
 
@@ -53,13 +53,13 @@ final as (
 )
 
 select
-    -- date_time_key: YYYYMMDDHH in local time — matches MySQL source format
+    -- sk_date_time: YYYYMMDDHH in local time — matches MySQL source format
     cast(
         year(ts_local)    * 1000000
         + month(ts_local) * 10000
         + day(ts_local)   * 100
         + hour(ts_local)
-    as int)                                 as date_time_key,
+    as int)                                 as sk_date_time,
 
     cast(ts_local as date)                  as date,
     cast(hour(ts_local)    as tinyint)      as hour,

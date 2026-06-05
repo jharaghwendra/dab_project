@@ -36,3 +36,15 @@ sources:
         columns:
           - name: gameRoundId
             description: "Primary key — unique game round identifier"
+
+      - name: game
+        description: "Game catalogue — one row per game. Upserted on gameId. Global reference table (same schema per country database)."
+        columns:
+          - name: gameId
+            description: "Primary key — unique game identifier"
+
+      - name: brandgame
+        description: "Brand-specific game configuration layer. One row per (brand, game). FK gameId → game.gameId. Contains brand-level enable/disable state, provider info, and compliance overrides."
+        columns:
+          - name: brandGameId
+            description: "Primary key — unique brand-game identifier (brand prefix + gameId)"
