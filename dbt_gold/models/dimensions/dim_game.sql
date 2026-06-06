@@ -28,6 +28,11 @@ brandgame as (
 
 joined as (
     select
+        -- -------------------------------------------------------------------------
+        -- Surrogate key
+        -- -------------------------------------------------------------------------
+        {{ dbt_utils.generate_surrogate_key(['g.gameId', 'g.country_code']) }} as sk_game,
+
         g.gameId,
         g.country_code,
 

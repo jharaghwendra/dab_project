@@ -48,3 +48,9 @@ sources:
         columns:
           - name: brandGameId
             description: "Primary key — unique brand-game identifier (brand prefix + gameId)"
+
+      - name: tag
+        description: "User and entity tags. One row per tagId. Key use: test-user exclusion (targetType='User' AND tagCategory='TEST')."
+        columns:
+          - name: tagId
+            description: "Primary key — unique tag identifier"

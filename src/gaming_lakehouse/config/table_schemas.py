@@ -16,11 +16,13 @@ Adding a new table:
 from dataclasses import dataclass
 
 from pyspark.sql.types import (
+    BooleanType,
     ByteType,
     DateType,
     DecimalType,
     DoubleType,
     IntegerType,
+    LongType,
     StringType,
     StructField,
     StructType,
@@ -686,6 +688,35 @@ _BRANDGAME_SCHEMA = StructType(
 )
 
 # ---------------------------------------------------------------------------
+# tag
+# ---------------------------------------------------------------------------
+# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
+#   idx_createdat    (createdAt)
+#   idx_updatedat    (updatedAt)
+#   idx_targetId     (targetId(34))
+# PK: tagId (varchar 255)
+# version_col: version — used for dedup ordering in merge
+# Key use: test-user exclusion filter — rows where targetType='User' AND tagCategory='TEST'
+# Schema verified against actual S3 parquet export (16,918 files, Jan–Jun 2026):
+#   active=bool, discardable=bool, version=int64 — brandId and last_update NOT in S3 export
+_TAG_SCHEMA = StructType(
+    [
+        StructField("createdAt", TimestampType(), True),
+        StructField("updatedAt", TimestampType(), True),
+        StructField("processedAt", TimestampType(), True),
+        StructField("active", BooleanType(), True),  # bool in parquet (not tinyint)
+        StructField("creatorId", StringType(), True),
+        StructField("tagCategory", StringType(), True),  # e.g. 'TEST', 'VIP', 'FRAUD'
+        StructField("tagId", StringType(), False),  # PK — varchar(255)
+        StructField("targetId", StringType(), True),  # userId when targetType='User'
+        StructField("targetType", StringType(), True),  # e.g. 'User'
+        StructField("updaterId", StringType(), True),
+        StructField("discardable", BooleanType(), True),  # bool in parquet (not tinyint)
+        StructField("version", LongType(), True),  # int64 in parquet
+    ]
+)
+
+# ---------------------------------------------------------------------------
 # Central registry — the only place the silver script reads from
 # ---------------------------------------------------------------------------
 TABLE_CONFIGS: dict[str, TableConfig] = {
@@ -723,6 +754,11 @@ TABLE_CONFIGS: dict[str, TableConfig] = {
         primary_key="brandGameId",
         schema=_BRANDGAME_SCHEMA,
         version_col="updatedAt",  # version col is text (not int) — use updatedAt for dedup ordering
+    ),
+    "tag": TableConfig(
+        primary_key="tagId",
+        schema=_TAG_SCHEMA,
+        version_col="version",  # int version column — used for dedup ordering and merge condition
     ),
     # "wallet": TableConfig(primary_key="walletId", schema=_WALLET_SCHEMA),
     # "playersession": TableConfig(primary_key="playerSessionId", schema=_PLAYERSESSION_SCHEMA),

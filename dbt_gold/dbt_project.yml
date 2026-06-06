@@ -42,3 +42,6 @@ models:
       +incremental_strategy: merge
       +file_format: delta
       +schema: gold
+    marts:
+      +file_format: delta
+      +schema: gold
