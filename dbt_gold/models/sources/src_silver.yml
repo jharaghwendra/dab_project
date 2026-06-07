@@ -54,3 +54,9 @@ sources:
         columns:
           - name: tagId
             description: "Primary key — unique tag identifier"
+
+      - name: userlimit
+        description: "Responsible gambling limits per player. One row per userLimitId (current state). SCD2 history tracked via dbt snapshot snap_userlimit."
+        columns:
+          - name: userLimitId
+            description: "Primary key — unique limit identifier"

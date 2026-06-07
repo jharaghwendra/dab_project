@@ -244,6 +244,34 @@ resources:
               - "--table_name"
               - "tag"
             source: WORKSPACE
+        - task_key: "bronze_userlimit_de"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "de"
+              - "--table_name"
+              - "userlimit"
+            source: WORKSPACE
+        - task_key: "silver_userlimit_de"
+          depends_on:
+            - task_key: "bronze_userlimit_de"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "de"
+              - "--table_name"
+              - "userlimit"
+            source: WORKSPACE
 
     tma_medallion_bronze_silver_at:
       name: "TMA Medallion Bronze and Silver AT"
@@ -489,6 +517,34 @@ resources:
               - "--table_name"
               - "tag"
             source: WORKSPACE
+        - task_key: "bronze_userlimit_at"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "at"
+              - "--table_name"
+              - "userlimit"
+            source: WORKSPACE
+        - task_key: "silver_userlimit_at"
+          depends_on:
+            - task_key: "bronze_userlimit_at"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "at"
+              - "--table_name"
+              - "userlimit"
+            source: WORKSPACE
 
     tma_medallion_bronze_silver_dk:
       name: "TMA Medallion Bronze and Silver DK"
@@ -733,4 +789,32 @@ resources:
               - "dk"
               - "--table_name"
               - "tag"
+            source: WORKSPACE
+        - task_key: "bronze_userlimit_dk"
+          depends_on:
+            - task_key: "00_wheel_task"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "dk"
+              - "--table_name"
+              - "userlimit"
+            source: WORKSPACE
+        - task_key: "silver_userlimit_dk"
+          depends_on:
+            - task_key: "bronze_userlimit_dk"
+          environment_key: default
+          spark_python_task:
+            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--country_code"
+              - "dk"
+              - "--table_name"
+              - "userlimit"
             source: WORKSPACE

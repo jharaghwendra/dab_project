@@ -717,6 +717,48 @@ _TAG_SCHEMA = StructType(
 )
 
 # ---------------------------------------------------------------------------
+# userlimit
+# ---------------------------------------------------------------------------
+# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
+#   idx_last_update   (last_update)
+#   idx_createdat     (createdAt)
+#   idx_updatedat     (updatedAt)
+#   idx_userid        (userId(20))
+#   idx_version       (version)
+# Talend upsert key: version — version-based merge (same pattern as gametransaction)
+# SCD2 target: dbt snapshot snap_userlimit uses updatedAt as strategy=timestamp
+_USERLIMIT_SCHEMA = StructType(
+    [
+        StructField("createdAt", TimestampType(), True),
+        StructField("updatedAt", TimestampType(), True),
+        StructField("processedAt", TimestampType(), True),
+        StructField("type", StringType(), True),  # DEPOSIT / LOSS / WAGER / SESSION_DURATION …
+        StructField("userId", StringType(), True),
+        StructField("status", StringType(), True),  # ACTIVE / CANCELED / PENDING
+        StructField("value", DecimalType(34, 4), True),
+        StructField("value_eur", DecimalType(34, 4), True),
+        StructField("value_base", DecimalType(34, 4), True),
+        StructField("currencyCode", StringType(), True),
+        StructField("brandId", StringType(), True),
+        StructField("jurisdiction", StringType(), True),
+        StructField("period", StringType(), True),  # DAILY / WEEKLY / MONTHLY …
+        StructField("activeFrom", TimestampType(), True),
+        StructField("activeUntil", TimestampType(), True),
+        StructField("nextResetTime", TimestampType(), True),
+        StructField("previousLimitValue", DecimalType(34, 4), True),  # value before last change
+        StructField("progress", StringType(), True),  # JSON — current progress toward limit
+        StructField("userLimitId", StringType(), False),  # PK — varchar(255)
+        StructField("creatorId", StringType(), True),
+        StructField("migrationId", StringType(), True),
+        StructField("discardable", ByteType(), True),
+        StructField("version", IntegerType(), True),
+        StructField("cancelingUserLimitRequestId", StringType(), True),
+        StructField("creatingUserLimitRequestId", StringType(), True),
+        StructField("last_update", TimestampType(), True),
+    ]
+)
+
+# ---------------------------------------------------------------------------
 # Central registry — the only place the silver script reads from
 # ---------------------------------------------------------------------------
 TABLE_CONFIGS: dict[str, TableConfig] = {
@@ -759,6 +801,11 @@ TABLE_CONFIGS: dict[str, TableConfig] = {
         primary_key="tagId",
         schema=_TAG_SCHEMA,
         version_col="version",  # int version column — used for dedup ordering and merge condition
+    ),
+    "userlimit": TableConfig(
+        primary_key="userLimitId",
+        schema=_USERLIMIT_SCHEMA,
+        version_col="version",  # int version column — same pattern as gametransaction
     ),
     # "wallet": TableConfig(primary_key="walletId", schema=_WALLET_SCHEMA),
     # "playersession": TableConfig(primary_key="playerSessionId", schema=_PLAYERSESSION_SCHEMA),
