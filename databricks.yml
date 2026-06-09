@@ -32,6 +32,9 @@ variables:
   countries:
     description: List of countries for TMA ingestion
     default: []
+  warehouse_id:
+    description: SQL warehouse used by dbt_task in gold layer jobs
+    default: "9299d8e6b7abab31"
 
 targets:
   dev:

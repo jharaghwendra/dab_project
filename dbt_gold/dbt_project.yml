@@ -37,14 +37,17 @@ models:
       +materialized: table
       +file_format: delta
       +schema: gold
+      +tags: ["gold", "dimensions"]
     facts:
       +materialized: incremental
       +incremental_strategy: merge
       +file_format: delta
       +schema: gold
+      +tags: ["gold", "facts"]
     marts:
       +file_format: delta
       +schema: gold
+      +tags: ["gold", "marts"]
 
 snapshots:
   dbt_gold:
