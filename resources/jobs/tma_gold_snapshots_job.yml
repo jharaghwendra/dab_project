@@ -1,0 +1,92 @@
+# tma_gold_snapshots_job.yml
+#
+# WHAT THIS JOB DOES:
+#   Runs all three SCD2 snapshot models HOURLY.
+#   All 3 tasks run IN PARALLEL — no depends_on between them.
+#
+# WHY SEPARATE FROM tma_gold_dims_job (which runs daily):
+#   SQL dims (dim_game, dim_date_spine etc.) are materialized: table —
+#   full rebuild every run — wasteful to run hourly.
+#
+#   Snapshots read directly from silver and only INSERT new rows when data
+#   changes. dbt snapshot is idempotent — if nothing changed since last run,
+#   it scans and exits in ~10 seconds. Safe and cheap to run hourly.
+#
+# WHY HOURLY:
+#   Player profiles (dim_player) change throughout the day:
+#     - KYC verification completed at 14:35 → needs to be in gold within the hour
+#     - Account locked at 09:12 → PowerComply mart must see updated state
+#   Running daily would mean mart_pc_account_signup sends stale payload_json
+#   until next morning — violating regulatory SLA.
+#
+# WHY 3 SEPARATE TASKS (not one dbt snapshot call):
+#   Failure isolation: dim_userlimit failure won't block dim_player/dim_tag.
+#   dim_player and dim_tag are CRITICAL — read by mart_pc_account_signup.
+#   dim_userlimit failure only affects responsible gambling reporting.
+#
+# TRIGGERED BY:
+#   tma_gold_hourly_orchestrator — runs in parallel with tma_gold_facts_job.
+#   Can also be triggered manually (e.g. after a silver backfill).
+#
+# DATABRICKS UI:
+#   Workflows → Jobs → "TMA Gold Snapshots Hourly"
+#   Task graph: [snapshot_dim_player] [snapshot_dim_tag] [snapshot_dim_userlimit]
+#               (3 boxes side-by-side, no arrows between them)
+
+resources:
+  jobs:
+    tma_gold_snapshots_job:
+      name: "TMA Gold Snapshots Hourly"
+      max_concurrent_runs: 1
+
+      environments:
+        - environment_key: dbt_env
+          spec:
+            environment_version: "2"
+            dependencies:
+              - "dbt-databricks>=1.8.0,<2.0.0"
+
+      tasks:
+        # ── snapshot: dim_player (SCD2) ───────────────────────────────────────
+        # Source: silver.userdata — tracks every change to player profile/KYC.
+        # CRITICAL: read by mart_pc_account_signup (Layer 1 dbt model).
+        # Separate task so dim_tag/dim_userlimit failures don't block this.
+        - task_key: "snapshot_dim_player"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt snapshot --select dim_player"
+            warehouse_id: "${var.warehouse_id}"
+
+        # ── snapshot: dim_tag (SCD2) ──────────────────────────────────────────
+        # Source: silver.tag — tracks tag assignment changes per player.
+        # CRITICAL: read by mart_pc_account_signup alongside dim_player.
+        # Separate task so dim_player/dim_userlimit failures don't block this.
+        - task_key: "snapshot_dim_tag"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt snapshot --select dim_tag"
+            warehouse_id: "${var.warehouse_id}"
+
+        # ── snapshot: dim_userlimit (SCD2) ────────────────────────────────────
+        # Source: silver.userlimit — tracks responsible gambling limit changes.
+        # Not a dependency of any current mart — isolated failure is safe.
+        - task_key: "snapshot_dim_userlimit"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt snapshot --select dim_userlimit"
+            warehouse_id: "${var.warehouse_id}"

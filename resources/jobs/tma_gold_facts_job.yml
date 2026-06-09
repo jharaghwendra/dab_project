@@ -1,0 +1,121 @@
+# tma_gold_facts_job.yml
+#
+# WHAT THIS JOB DOES:
+#   Runs all dbt fact models in the gold layer.
+#   All fact tasks run IN PARALLEL — no depends_on between them.
+#   Each is an incremental merge on its own grain key.
+#
+# WHY PARALLEL:
+#   fact_payments, fact_game_revenue, fact_gameround, fact_gametransaction_kpi
+#   read from different silver tables and write to different gold tables.
+#   No cross-fact dependencies → safe to run simultaneously.
+#
+# PREREQUISITE:
+#   Dims must be complete before facts run. This is enforced by the orchestrator
+#   (tma_gold_orchestrator_job) — not hardcoded here. This job itself has no
+#   knowledge of dims, keeping it independently runnable.
+#
+# TRIGGERED BY:
+#   tma_gold_orchestrator_job — via run_job_task after tma_gold_dims_job succeeds.
+#   Can also be triggered manually (e.g. reprocess facts after a hotfix).
+#
+# DATABRICKS UI:
+#   Workflows → Jobs → "TMA Gold Facts"
+#   4 facts run in parallel, mart_gameround_hourly runs after fact_gameround:
+#   [fact_payments] [fact_game_revenue] [fact_gameround] [fact_gametransaction_kpi]
+#                                             ↓
+#                                   [mart_gameround_hourly]
+
+resources:
+  jobs:
+    tma_gold_facts_job:
+      name: "TMA Gold Facts"
+      max_concurrent_runs: 1
+
+      # Serverless environment — dbt runs here, SQL queries go to the warehouse.
+      environments:
+        - environment_key: dbt_env
+          spec:
+            environment_version: "2"
+            dependencies:
+              - "dbt-databricks>=1.8.0,<2.0.0"
+
+      tasks:
+        # ── fact_payments ─────────────────────────────────────────────────────
+        # Incremental merge on paymentId. Source: silver.payment
+        - task_key: "fact_payments"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt run --select fact_payments"
+            warehouse_id: "${var.warehouse_id}"
+
+        # ── fact_game_revenue ─────────────────────────────────────────────────
+        # Incremental merge on gameTransactionId. Source: silver.gametransaction
+        - task_key: "fact_game_revenue"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt run --select fact_game_revenue"
+            warehouse_id: "${var.warehouse_id}"
+
+        # ── fact_gameround ────────────────────────────────────────────────────
+        # Incremental merge on gameRoundId. Source: silver.gameround
+        - task_key: "fact_gameround"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt run --select fact_gameround"
+            warehouse_id: "${var.warehouse_id}"
+
+        # ── fact_gametransaction_kpi ──────────────────────────────────────────
+        # Incremental merge, aggregated KPIs per game session.
+        - task_key: "fact_gametransaction_kpi"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt run --select fact_gametransaction_kpi"
+            warehouse_id: "${var.warehouse_id}"
+
+        # ── mart_gameround_hourly ─────────────────────────────────────────────
+        # Pre-aggregated mart: grain = one row per (hour × game × country).
+        # Designed for BI consumption (QlikView QVD daily load).
+        # 2-day lookback window on incremental runs — handles late-arriving data.
+        #
+        # WHY in facts job (not marts job):
+        #   Uses ref('fact_gameround') — direct dependent of fact_gameround.
+        #   No HTTP dispatch needed — pure analytical mart, not an integration.
+        #   Runs on same cadence as facts (not every 10 min like PC dispatcher).
+        #
+        # WHY depends_on fact_gameround only (not all 4 facts):
+        #   Only reads fact_gameround — no dependency on fact_payments,
+        #   fact_game_revenue, or fact_gametransaction_kpi.
+        #   Other facts can still fail without blocking this mart.
+        - task_key: "mart_gameround_hourly"
+          depends_on:
+            - task_key: "fact_gameround"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt run --select mart_gameround_hourly"
+            warehouse_id: "${var.warehouse_id}"

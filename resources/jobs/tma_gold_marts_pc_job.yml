@@ -1,0 +1,79 @@
+# tma_gold_marts_pc_job.yml
+#
+# WHAT THIS JOB DOES:
+#   Two sequential tasks — Layer 1 (dbt mart) then Layer 2 (HTTP dispatcher).
+#
+#   Task 1: dbt_mart_pc_account_signup
+#     Python dbt model. Reads dim_player + dim_tag from silver (SCD2 snapshot).
+#     Builds payload_json per player. Incremental merge on (online_customer_id, country_code).
+#     Sets dispatched_at = NULL on every MATCHED (changed) or NOT MATCHED (new) row.
+#
+#   Task 2: pc_dispatcher
+#     Python script (spark_python_task). Reads WHERE dispatched_at IS NULL.
+#     POSTs each row to PowerComply row-by-row (their API constraint).
+#     Updates Delta immediately per row — crash-safe, no double-send on retry.
+#
+# WHY SEQUENTIAL (not parallel):
+#   Task 2 consumes the output of Task 1. Task 2 MUST wait for Task 1 to complete
+#   so the mart has the latest staged payloads before the dispatcher reads them.
+#
+# TRIGGERED BY:
+#   tma_gold_orchestrator_job — via run_job_task after tma_gold_facts_job succeeds.
+#   Can also be triggered manually (e.g. retry failed dispatches).
+#
+# DATABRICKS UI:
+#   Workflows → Jobs → "TMA Gold Marts PC"
+#   Task graph: [dbt_mart_pc_account_signup] → [pc_dispatcher]  (arrow = depends_on)
+
+resources:
+  jobs:
+    tma_gold_marts_pc_job:
+      name: "TMA Gold Marts PC"
+      max_concurrent_runs: 1
+
+      # Run every 10 minutes — uncomment when ready to activate in prod.
+      # Runs after dbt mart builds staged rows (dispatched_at IS NULL).
+      # schedule:
+      #   quartz_cron_expression: "0 0/10 * * * ?"   # every 10 min
+      #   timezone_id: "UTC"
+      #   pause_status: "UNPAUSED"
+
+      # Python script environment — for pc_dispatcher spark_python_task
+      environments:
+        - environment_key: dbt_env
+          spec:
+            environment_version: "2"
+            dependencies:
+              - "dbt-databricks>=1.8.0,<2.0.0"
+        - environment_key: default
+          spec:
+            environment_version: "2"
+            dependencies:
+              - ../../dist/dab_project-${var.wheel_version}-py3-none-any.whl
+
+      tasks:
+        # ── Task 1: dbt mart — Layer 1 ────────────────────────────────────────
+        # Builds/refreshes mart_pc_account_signup in gold.
+        # dispatched_at = NULL on every new/changed row after this runs.
+        - task_key: "dbt_mart_pc_account_signup"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt run --select marts.mart_pc_account_signup"
+              - "dbt test --select marts.mart_pc_account_signup"
+            warehouse_id: "${var.warehouse_id}"
+
+        # ── Task 2: HTTP dispatcher — Layer 2 ─────────────────────────────────
+        # Reads WHERE dispatched_at IS NULL, POSTs to PowerComply, marks sent/failed.
+        # Uses dbutils.jobs.taskValues.set() — compatible with spark_python_task type.
+        - task_key: "pc_dispatcher"
+          depends_on:
+            - task_key: "dbt_mart_pc_account_signup"
+          environment_key: default
+          spark_python_task:
+            python_file: "${workspace.file_path}/gaming_lakehouse/scripts/03_gold/nb_pc_dispatcher.py"
+            source: WORKSPACE

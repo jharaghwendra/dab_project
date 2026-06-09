@@ -36,3 +36,27 @@ sources:
         columns:
           - name: gameRoundId
             description: "Primary key — unique game round identifier"
+
+      - name: game
+        description: "Game catalogue — one row per game. Upserted on gameId. Global reference table (same schema per country database)."
+        columns:
+          - name: gameId
+            description: "Primary key — unique game identifier"
+
+      - name: brandgame
+        description: "Brand-specific game configuration layer. One row per (brand, game). FK gameId → game.gameId. Contains brand-level enable/disable state, provider info, and compliance overrides."
+        columns:
+          - name: brandGameId
+            description: "Primary key — unique brand-game identifier (brand prefix + gameId)"
+
+      - name: tag
+        description: "User and entity tags. One row per tagId. Key use: test-user exclusion (targetType='User' AND tagCategory='TEST')."
+        columns:
+          - name: tagId
+            description: "Primary key — unique tag identifier"
+
+      - name: userlimit
+        description: "Responsible gambling limits per player. One row per userLimitId (current state). SCD2 history tracked via dbt snapshot snap_userlimit."
+        columns:
+          - name: userLimitId
+            description: "Primary key — unique limit identifier"

@@ -16,11 +16,13 @@ Adding a new table:
 from dataclasses import dataclass
 
 from pyspark.sql.types import (
+    BooleanType,
     ByteType,
     DateType,
     DecimalType,
     DoubleType,
     IntegerType,
+    LongType,
     StringType,
     StructField,
     StructType,
@@ -557,6 +559,204 @@ _GAMEROUND_SCHEMA = StructType(
 # _PLAYERSESSION_SCHEMA = StructType([...])
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# game
+# ---------------------------------------------------------------------------
+# MySQL indexes: idx_createdat (createdAt), idx_updatedat (updatedAt), idx_last_update (last_update)
+# Upsert key: version (text in MySQL but treated as dedup signal — updatedAt used instead)
+_GAME_SCHEMA = StructType(
+    [
+        StructField("createdAt", TimestampType(), True),
+        StructField("updatedAt", TimestampType(), True),
+        StructField("processedAt", TimestampType(), True),
+        StructField("allowedWalletType", StringType(), True),
+        StructField("bonusGame", ByteType(), True),
+        StructField("bonusHitFrequency", StringType(), True),
+        StructField("branded", ByteType(), True),
+        StructField("class", StringType(), True),
+        StructField("enabled", ByteType(), True),
+        StructField("features", StringType(), True),  # JSON stored as string
+        StructField("freeGames", ByteType(), True),
+        StructField("gamble", ByteType(), True),
+        StructField("gameId", StringType(), False),  # PK
+        StructField("height", IntegerType(), True),
+        StructField("jackpotId", StringType(), True),
+        StructField("layout", StringType(), True),
+        StructField("live", ByteType(), True),
+        StructField("loginRequired", ByteType(), True),
+        StructField("maxBet", StringType(), True),
+        StructField("maxCoins", IntegerType(), True),
+        StructField("maxLines", StringType(), True),
+        StructField("maxPayout", StringType(), True),
+        StructField("minBet", StringType(), True),
+        StructField("name", StringType(), True),
+        StructField("progressiveJackpot", ByteType(), True),
+        StructField("reelsRows", StringType(), True),
+        StructField("releasedAt", TimestampType(), True),
+        StructField("restrictedCountries", StringType(), True),  # JSON stored as string
+        StructField("restrictedJurisdictions", StringType(), True),  # JSON stored as string
+        StructField("rtp", StringType(), True),
+        StructField("slug", StringType(), True),
+        StructField("studio", StringType(), True),
+        StructField("tableId", StringType(), True),
+        StructField("tags", StringType(), True),  # JSON stored as string
+        StructField("tcUpdatedAt", TimestampType(), True),
+        StructField("type", StringType(), True),
+        StructField("version", StringType(), True),  # text in MySQL — not an int version
+        StructField("vertical", StringType(), True),
+        StructField("volatility", StringType(), True),
+        StructField("wageringCoefficient", StringType(), True),
+        StructField("width", IntegerType(), True),
+        StructField("complianceDetails", StringType(), True),
+        StructField("freeGamesFixedAmount", ByteType(), True),
+        StructField("private", ByteType(), True),
+        StructField("videoThumbnail", ByteType(), True),
+        StructField("discardable", ByteType(), True),
+        StructField("last_update", TimestampType(), True),
+    ]
+)
+
+
+# ---------------------------------------------------------------------------
+# brandgame
+# ---------------------------------------------------------------------------
+# Brand-specific configuration layer on top of game.
+# One brandgame row per (brand, game) combination.
+# brandgame.gameId (text FK) → game.gameId
+# MySQL indexes: idx_createdat (createdAt), idx_updatedat (updatedAt), idx_last_update (last_update)
+_BRANDGAME_SCHEMA = StructType(
+    [
+        StructField("createdAt", TimestampType(), True),
+        StructField("updatedAt", TimestampType(), True),
+        StructField("processedAt", TimestampType(), True),
+        StructField("allowedWalletType", StringType(), True),
+        StructField("bonusGame", ByteType(), True),
+        StructField("bonusHitFrequency", StringType(), True),
+        StructField("branded", ByteType(), True),
+        StructField("class", StringType(), True),
+        StructField("enabled", ByteType(), True),
+        StructField("features", StringType(), True),  # JSON stored as string
+        StructField("freeGames", ByteType(), True),
+        StructField("gamble", ByteType(), True),
+        StructField("brandGameId", StringType(), False),  # PK
+        StructField("height", IntegerType(), True),
+        StructField("jackpotId", StringType(), True),
+        StructField("layout", StringType(), True),
+        StructField("live", ByteType(), True),
+        StructField("loginRequired", ByteType(), True),
+        StructField("maxBet", StringType(), True),
+        StructField("maxCoins", IntegerType(), True),
+        StructField("maxLines", StringType(), True),
+        StructField("maxPayout", StringType(), True),
+        StructField("minBet", StringType(), True),
+        StructField("name", StringType(), True),
+        StructField("progressiveJackpot", ByteType(), True),
+        StructField("reelsRows", StringType(), True),
+        StructField("releasedAt", TimestampType(), True),
+        StructField("restrictedCountries", StringType(), True),  # JSON stored as string
+        StructField("restrictedJurisdictions", StringType(), True),  # JSON stored as string
+        StructField("rtp", StringType(), True),
+        StructField("slug", StringType(), True),
+        StructField("studio", StringType(), True),
+        StructField("tableId", StringType(), True),
+        StructField("tags", StringType(), True),  # JSON stored as string
+        StructField("tcUpdatedAt", TimestampType(), True),
+        StructField("type", StringType(), True),
+        StructField("version", StringType(), True),  # text in MySQL — not an int version
+        StructField("vertical", StringType(), True),
+        StructField("volatility", StringType(), True),
+        StructField("wageringCoefficient", StringType(), True),
+        StructField("width", IntegerType(), True),
+        StructField("enabledAt", TimestampType(), True),
+        StructField("disabledAt", TimestampType(), True),
+        StructField("firstEnabledAt", TimestampType(), True),
+        StructField("complianceDetails", StringType(), True),
+        StructField("freeGamesFixedAmount", ByteType(), True),
+        StructField("gameEnabled", ByteType(), True),
+        StructField("gameId", StringType(), True),  # FK → game.gameId
+        StructField("gameProviderId", StringType(), True),
+        StructField("gameRestrictedCountries", StringType(), True),
+        StructField("gameRestrictedJurisdictions", StringType(), True),
+        StructField("gameSettingsAvailable", ByteType(), True),
+        StructField("jurisdictionRtpLevels", StringType(), True),
+        StructField("privateStatus", StringType(), True),
+        StructField("resellerOrganizationId", StringType(), True),
+        StructField("discardable", ByteType(), True),
+        StructField("assets", StringType(), True),
+        StructField("last_update", TimestampType(), True),
+    ]
+)
+
+# ---------------------------------------------------------------------------
+# tag
+# ---------------------------------------------------------------------------
+# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
+#   idx_createdat    (createdAt)
+#   idx_updatedat    (updatedAt)
+#   idx_targetId     (targetId(34))
+# PK: tagId (varchar 255)
+# version_col: version — used for dedup ordering in merge
+# Key use: test-user exclusion filter — rows where targetType='User' AND tagCategory='TEST'
+# Schema verified against actual S3 parquet export (16,918 files, Jan–Jun 2026):
+#   active=bool, discardable=bool, version=int64 — brandId and last_update NOT in S3 export
+_TAG_SCHEMA = StructType(
+    [
+        StructField("createdAt", TimestampType(), True),
+        StructField("updatedAt", TimestampType(), True),
+        StructField("processedAt", TimestampType(), True),
+        StructField("active", BooleanType(), True),  # bool in parquet (not tinyint)
+        StructField("creatorId", StringType(), True),
+        StructField("tagCategory", StringType(), True),  # e.g. 'TEST', 'VIP', 'FRAUD'
+        StructField("tagId", StringType(), False),  # PK — varchar(255)
+        StructField("targetId", StringType(), True),  # userId when targetType='User'
+        StructField("targetType", StringType(), True),  # e.g. 'User'
+        StructField("updaterId", StringType(), True),
+        StructField("discardable", BooleanType(), True),  # bool in parquet (not tinyint)
+        StructField("version", LongType(), True),  # int64 in parquet
+    ]
+)
+
+# ---------------------------------------------------------------------------
+# userlimit
+# ---------------------------------------------------------------------------
+# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
+#   idx_last_update   (last_update)
+#   idx_createdat     (createdAt)
+#   idx_updatedat     (updatedAt)
+#   idx_userid        (userId(20))
+#   idx_version       (version)
+# Talend upsert key: version — version-based merge (same pattern as gametransaction)
+# SCD2 target: dbt snapshot snap_userlimit uses updatedAt as strategy=timestamp
+_USERLIMIT_SCHEMA = StructType(
+    [
+        StructField("createdAt", TimestampType(), True),
+        StructField("updatedAt", TimestampType(), True),
+        StructField("processedAt", TimestampType(), True),
+        StructField("type", StringType(), True),  # DEPOSIT / LOSS / WAGER / SESSION_DURATION …
+        StructField("userId", StringType(), True),
+        StructField("status", StringType(), True),  # ACTIVE / CANCELED / PENDING
+        StructField("value", DecimalType(34, 4), True),
+        StructField("value_eur", DecimalType(34, 4), True),
+        StructField("value_base", DecimalType(34, 4), True),
+        StructField("currencyCode", StringType(), True),
+        StructField("brandId", StringType(), True),
+        StructField("jurisdiction", StringType(), True),
+        StructField("period", StringType(), True),  # DAILY / WEEKLY / MONTHLY …
+        StructField("activeFrom", TimestampType(), True),
+        StructField("activeUntil", TimestampType(), True),
+        StructField("nextResetTime", TimestampType(), True),
+        StructField("previousLimitValue", DecimalType(34, 4), True),  # value before last change
+        StructField("progress", StringType(), True),  # JSON — current progress toward limit
+        StructField("userLimitId", StringType(), False),  # PK — varchar(255)
+        StructField("creatorId", StringType(), True),
+        StructField("migrationId", StringType(), True),
+        StructField("discardable", ByteType(), True),
+        StructField("version", IntegerType(), True),
+        StructField("cancelingUserLimitRequestId", StringType(), True),
+        StructField("creatingUserLimitRequestId", StringType(), True),
+        StructField("last_update", TimestampType(), True),
+    ]
+)
 
 # ---------------------------------------------------------------------------
 # Central registry — the only place the silver script reads from
@@ -585,6 +785,26 @@ TABLE_CONFIGS: dict[str, TableConfig] = {
     "gameround": TableConfig(
         primary_key="gameRoundId",
         schema=_GAMEROUND_SCHEMA,
+        version_col="version",  # int version column — same pattern as gametransaction
+    ),
+    "game": TableConfig(
+        primary_key="gameId",
+        schema=_GAME_SCHEMA,
+        version_col="updatedAt",  # version col in MySQL is text (not int) — use updatedAt for dedup ordering
+    ),
+    "brandgame": TableConfig(
+        primary_key="brandGameId",
+        schema=_BRANDGAME_SCHEMA,
+        version_col="updatedAt",  # version col is text (not int) — use updatedAt for dedup ordering
+    ),
+    "tag": TableConfig(
+        primary_key="tagId",
+        schema=_TAG_SCHEMA,
+        version_col="version",  # int version column — used for dedup ordering and merge condition
+    ),
+    "userlimit": TableConfig(
+        primary_key="userLimitId",
+        schema=_USERLIMIT_SCHEMA,
         version_col="version",  # int version column — same pattern as gametransaction
     ),
     # "wallet": TableConfig(primary_key="walletId", schema=_WALLET_SCHEMA),

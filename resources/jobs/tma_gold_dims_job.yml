@@ -1,0 +1,92 @@
+# tma_gold_dims_job.yml
+#
+# WHAT THIS JOB DOES:
+#   Runs all dbt SQL dimension models in the gold layer — DAILY only.
+#   All tasks run IN PARALLEL — no depends_on between them.
+#
+# WHY DAILY (not hourly):
+#   These are materialized: table — full rebuild on every run.
+#   dim_game, dim_payment_method change rarely (new games added once a week).
+#   dim_date_spine/dim_date_time are static spine tables — never change intraday.
+#   Running hourly wastes compute for zero benefit.
+#
+# SCD2 SNAPSHOTS ARE NOT HERE:
+#   Snapshots (dim_player, dim_tag, dim_userlimit) run hourly in a separate job:
+#   tma_gold_snapshots_job.yml — because player profiles change throughout the day.
+#
+# TRIGGERED BY:
+#   tma_gold_orchestrator_job — once per day after silver batch completes.
+#   Can also be triggered manually for a full dim refresh.
+#
+# DATABRICKS UI:
+#   Workflows → Jobs → "TMA Gold Dims Daily"
+#   Task graph shows 4 boxes side-by-side (all parallel, no arrows between them):
+#   [dim_date_spine] [dim_date_time] [dim_game] [dim_payment_method]
+
+resources:
+  jobs:
+    tma_gold_dims_job:
+      name: "TMA Gold Dims Daily"
+      max_concurrent_runs: 1
+
+      # Serverless environment — dbt runs here, SQL queries go to the warehouse.
+      environments:
+        - environment_key: dbt_env
+          spec:
+            environment_version: "2"
+            dependencies:
+              - "dbt-databricks>=1.8.0,<2.0.0"
+
+      tasks:
+        # ── dim_date_spine ────────────────────────────────────────────────────
+        # Python model: generates 35K rows of date/time spine with CET/CEST DST.
+        # Full table replace on every run (materialized: table).
+        - task_key: "dim_date_spine"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt run --select dim_date_spine"
+            warehouse_id: "${var.warehouse_id}"
+
+        # ── dim_date_time ─────────────────────────────────────────────────────
+        # SQL model: time dimension (hour, minute, AM/PM, etc.)
+        - task_key: "dim_date_time"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt run --select dim_date_time"
+            warehouse_id: "${var.warehouse_id}"
+
+        # ── dim_game ──────────────────────────────────────────────────────────
+        # SQL model: game catalog dimension from silver.game
+        - task_key: "dim_game"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt run --select dim_game"
+            warehouse_id: "${var.warehouse_id}"
+
+        # ── dim_payment_method ────────────────────────────────────────────────
+        # SQL model: payment method dimension from silver.payment
+        - task_key: "dim_payment_method"
+          environment_key: dbt_env
+          dbt_task:
+            project_directory: "${workspace.file_path}/dbt_gold"
+            catalog: "${var.catalog}"
+            schema: gold
+            commands:
+              - "dbt deps"
+              - "dbt run --select dim_payment_method"
+            warehouse_id: "${var.warehouse_id}"

@@ -1,0 +1,96 @@
+version: 2
+
+models:
+  - name: mart_pc_account_signup
+    description: >
+      PowerComply AML integration — staged signup event payloads.
+      One row per player (userId + country_code) with a pre-built JSON payload
+      ready for the nb_pc_dispatcher notebook to POST to the PowerComply REST endpoint.
+
+      Replaces Talend job: pc_account_signup_incremental_load
+      Architecture: Layer 1 of 2-layer design.
+        Layer 1 (this model): data transformation, JSON serialization, watermark
+        Layer 2 (nb_pc_dispatcher.py): HTTP POST, token refresh, dead-letter
+
+      Key improvement over Talend:
+        Talend produced "active":1 (MySQL TINYINT integer) in tagCategories JSON.
+        This model produces "active":true (Python bool) — correct for REST APIs.
+
+      Incremental strategy: merge on (online_customer_id, country_code).
+      Picks up: players whose profile changed (updatedAt watermark) OR whose
+      tags changed (tag_updated_at watermark). Covers both change events.
+
+      Dispatcher contract:
+        SELECT * FROM mart_pc_account_signup WHERE dispatched_at IS NULL
+        POST payload_json row-by-row (PowerComply does not support batch)
+        On 200: UPDATE dispatched_at = current_timestamp()
+        On error: UPDATE dispatch_error = response body (dead-letter)
+
+    config:
+      materialized: incremental
+      incremental_strategy: merge
+      file_format: delta
+      schema: gold
+
+    columns:
+      - name: online_customer_id
+        description: >
+          Player userId — matches the onlineCustomerId field in the PowerComply payload.
+          Part of composite merge key.
+        tests:
+          - not_null
+
+      - name: country_code
+        description: >
+          Country shard (DE / AT / DK). Part of composite merge key.
+          Needed because userId is unique per country shard, not globally.
+        tests:
+          - not_null
+
+      - name: payload_json
+        description: >
+          Full serialized JSON string for the PowerComply Account signup event.
+          Structure matches the PowerComply REST API contract exactly.
+          Boolean values are correctly serialized (active:true, not active:1).
+          Ready to POST as request body — no further transformation needed.
+        tests:
+          - not_null
+
+      - name: source_updated_at
+        description: >
+          Watermark column — updatedAt from dim_player at the time this row was staged.
+          Used by the next incremental run to filter only changed players.
+          Equivalent to Talend's last_run_timestamp job control table pattern.
+        tests:
+          - not_null
+
+      - name: tag_updated_at
+        description: >
+          Max dbt_updated_at from dim_tag for this player.
+          Used alongside source_updated_at to detect tag-only changes
+          (tag change does not touch updatedAt on dim_player).
+          NULL if player has no tags.
+
+      - name: isTestUser
+        description: >
+          'Y' if player has any active tagCategory='TEST' tag, else 'N'.
+          Denormalized here for quick inspection and dbt testing.
+          Also embedded inside payload_json.account.isTestUser.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Y", "N"]
+
+      - name: dispatched_at
+        description: >
+          Timestamp when nb_pc_dispatcher successfully POSTed this row.
+          NULL = not yet dispatched — dispatcher reads WHERE dispatched_at IS NULL.
+          Set by dispatcher after receiving HTTP 200 from PowerComply endpoint.
+
+      - name: dispatch_error
+        description: >
+          Error response body if the POST failed.
+          NULL = no error. Non-NULL = dead-letter — requires manual investigation.
+          Dispatcher sets this on non-200 response instead of raising an exception,
+          so one failed row does not block processing of subsequent rows.

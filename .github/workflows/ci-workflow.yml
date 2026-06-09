@@ -44,3 +44,26 @@ jobs:
         with:
           name: coverage-html-report
           path: htmlcov
+
+      # ── dbt CI checks ──────────────────────────────────────────────────────
+      # Validates dbt project syntax WITHOUT connecting to Databricks.
+      # dbt parse compiles all models, checks ref()/source() resolution,
+      # and validates packages.yml — catches broken SQL/Python before deploy.
+      #
+      # DATABRICKS_TOKEN=dummy: dbt parse doesn't make any HTTP calls,
+      # but dbt-databricks requires the env var to be set for profile loading.
+      - name: 'Install dbt-databricks'
+        run: pip install "dbt-databricks>=1.8.0,<2.0.0"
+
+      - name: 'dbt deps — install packages'
+        working-directory: dbt_gold
+        run: dbt deps
+
+      - name: 'dbt parse — validate model syntax'
+        working-directory: dbt_gold
+        env:
+          DATABRICKS_TOKEN: dummy-ci-token
+          DBT_CATALOG: tma_dev
+          DATABRICKS_HOST: dbc-71b2b101-72ab.cloud.databricks.com
+          DBT_HTTP_PATH: /sql/1.0/warehouses/9299d8e6b7abab31
+        run: dbt parse --profiles-dir .

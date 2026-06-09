@@ -37,8 +37,20 @@ models:
       +materialized: table
       +file_format: delta
       +schema: gold
+      +tags: ["gold", "dimensions"]
     facts:
       +materialized: incremental
       +incremental_strategy: merge
       +file_format: delta
       +schema: gold
+      +tags: ["gold", "facts"]
+    marts:
+      +file_format: delta
+      +schema: gold
+      +tags: ["gold", "marts"]
+
+snapshots:
+  dbt_gold:
+    +target_schema: gold       # snapshots land in tma_dev.gold alongside dims/facts — single schema for BI
+    +file_format: delta
+    +invalidate_hard_deletes: true

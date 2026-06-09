@@ -64,3 +64,18 @@ Internal Error
 [0m12:10:54.719294 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000231AAF25340>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000231A552ED80>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000231DB226510>]}
 [0m12:10:54.719294 [debug] [MainThread]: Flushing usage events
 [0m12:10:55.501089 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m08:58:18.421629 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021DE9CE8500>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021DE6B94770>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021DE9853860>]}
+
+
+============================== 08:58:18.421629 | c323c994-267e-44be-9635-49921b2400f2 ==============================
+[0m08:58:18.421629 [info ] [MainThread]: Running with dbt=1.11.8
+[0m08:58:18.421629 [debug] [MainThread]: running dbt with arguments {'version_check': 'True', 'no_print': 'None', 'static_parser': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'target_path': 'None', 'printer_width': '80', 'write_json': 'True', 'empty': 'False', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': 'C:\\Users\\r.jha\\.dbt', 'use_colors': 'True', 'invocation_command': 'dbt run --select dim_game', 'indirect_selection': 'eager', 'use_experimental_parser': 'False', 'log_path': 'logs'}
+[0m08:58:18.421629 [error] [MainThread]: Encountered an error:
+Runtime Error
+  No dbt_project.yml found at expected path C:\raghav-data\Data-Eng\Databricks\Udemy-Databricks-Asset-Bundle\dab_project\dbt_project.yml
+  Verify that each entry within packages.yml (and their transitive dependencies) contains a file named dbt_project.yml
+  
+[0m08:58:18.421629 [debug] [MainThread]: Command `dbt run` failed at 08:58:18.421629 after 0.22 seconds
+[0m08:58:18.421629 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021DE70B7E90>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021DE9CE8500>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021DEB210A70>]}
+[0m08:58:18.421629 [debug] [MainThread]: Flushing usage events
+[0m08:58:19.235110 [debug] [MainThread]: An error was encountered while trying to flush usage events
