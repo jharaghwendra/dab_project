@@ -1,0 +1,91 @@
+version: 2
+
+models:
+  - name: fact_gameround
+    description: >
+      One row per game round. Incremental merge on gameRoundId.
+      Source: tma_dev.silver.gameround
+
+    columns:
+      - name: gameRoundId
+        description: "Primary key — unique game round identifier"
+        tests:
+          - not_null
+          - unique
+
+      - name: country_code
+        description: "Country the game round belongs to"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["de", "at", "dk"]
+
+      - name: sk_date_time
+        description: "FK → dim_date_spine.sk_date_time"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date_spine')
+              field: sk_date_time
+
+unit_tests:
+
+  # ---------------------------------------------------------------------------
+  # Unit test — only closed rounds included
+  # Verifies: rows with closed = 0 (open rounds) must be filtered out
+  # ---------------------------------------------------------------------------
+  - name: unit_test_only_closed_rounds_included
+    model: fact_gameround
+    description: >
+      Only completed (closed=1) game rounds should appear in fact_gameround.
+      Open rounds (closed=0) have partial win amounts and must be excluded.
+
+    overrides:
+      macros:
+        is_incremental: false
+
+    given:
+      - input: source('silver', 'gameround')
+        rows:
+          # closed round — should appear
+          - gameRoundId: "ROUND-001"
+            userId: "USER-A"
+            country_code: "de"
+            gameId: "GAME-X"
+            closed: 1
+            promotional: 0
+            currencyCode: "EUR"
+            betAmount_eur: 10.0
+            winAmount_eur: 5.0
+            bonusBetAmount_eur: 0.0
+            bonusWinAmount_eur: 0.0
+            taxAmount_eur: 0.0
+            betCount: 1
+            winCount: 1
+            createdAt: "2026-01-15 10:00:00"
+            finishedAt: "2026-01-15 10:01:00"
+            updatedAt: "2026-01-15 10:01:00"
+          # open round — must be EXCLUDED
+          - gameRoundId: "ROUND-002"
+            userId: "USER-B"
+            country_code: "de"
+            gameId: "GAME-X"
+            closed: 0
+            promotional: 0
+            currencyCode: "EUR"
+            betAmount_eur: 20.0
+            winAmount_eur: 0.0
+            bonusBetAmount_eur: 0.0
+            bonusWinAmount_eur: 0.0
+            taxAmount_eur: 0.0
+            betCount: 1
+            winCount: 0
+            createdAt: "2026-01-15 10:02:00"
+            finishedAt: null
+            updatedAt: "2026-01-15 10:02:00"
+
+    expect:
+      rows:
+        # only ROUND-001 should appear — ROUND-002 is open (closed=0)
+        - gameRoundId: "ROUND-001"
+          ggr_eur: 5.0     # betAmount_eur(10) - winAmount_eur(5)
