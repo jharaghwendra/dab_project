@@ -279,7 +279,7 @@ Silver tables hold the latest valid version of each record using merge/upsert lo
 
 ### dbt Gold schema
 
-The iGaming Gold layer is built with dbt in the `gold` schema.
+The iGaming Gold layer uses Kimball-style star-schema modeling in the `gold` schema and is built with dbt.
 
 | Schema | Table Name | Type |
 |---|---|---|
