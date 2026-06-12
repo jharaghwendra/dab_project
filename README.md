@@ -13,7 +13,7 @@ Together they show how I build Databricks projects across ingestion, transformat
 ## Project Overview
 
 - Citibike DAB: separate catalog/schema, Bronze-Silver-Gold processing, local and Databricks Connect tests
-- iGaming DAB: delivered under the `gaming_lakehouse` name, Bronze-Silver processing with jobs and pipelines in `resources/jobs/` and `resources/pipelines/`
+- iGaming DAB: multi-country Bronze-Silver processing with jobs and pipelines in `resources/jobs/` and `resources/pipelines/`
 - iGaming dbt Gold layer: located in `dbt_gold/` with incremental models, tests, snapshots, and CI/CD workflows to support the iGaming BI platform
 
 ## Where To Look
@@ -25,6 +25,45 @@ Together they show how I build Databricks projects across ingestion, transformat
 | iGaming dbt Gold layer | [dbt Work](#dbt-work), especially [dbt_gold](dbt_gold) and [fact_payments.sql](dbt_gold/models/facts/fact_payments.sql) |
 | CI/CD workflow | [CI/CD Workflow](#cicd-workflow), especially [.github/workflows/ci-workflow.yml](.github/workflows/ci-workflow.yml) and [.github/workflows/cd-workflow.yml](.github/workflows/cd-workflow.yml) |
 | Setup and environment | This section below, kept intentionally short |
+
+---
+
+## Repository Structure
+
+```
+dab_project/
+├── databricks.yml              # DAB bundle config — targets: dev, test, prod
+├── pyproject.toml              # Python project metadata and dev dependencies
+├── requirements_pyspark.txt    # Local PySpark unit test venv dependencies
+├── requirements_dbc.txt        # Databricks Connect integration test venv dependencies
+├── .coveragerc                 # pytest-cov configuration (source=src, show_missing=True)
+│
+├── src/                        # Importable Python source code (tested locally)
+│   ├── citibike/
+│   │   └── citibike_utils.py   # Bronze→Silver→Gold transformation functions
+│   └── utils/
+│       └── datetime_utils.py   # Shared datetime helpers
+│
+├── citibike_etl/               # Databricks pipeline code (runs on cluster)
+│   ├── dlt/                    # Delta Live Tables pipeline scripts
+│   ├── notebooks/              # Jupyter notebooks (Bronze / Silver / Gold)
+│   └── scripts/                # Plain Python scripts
+│
+├── gaming_lakehouse/           # iGaming DAB project code and scripts
+├── resources/                  # DAB resource definitions
+│   ├── jobs/                   # Workflow job YAML configs
+│   └── pipelines/              # DLT pipeline YAML configs
+│
+├── dbt_gold/                   # iGaming Gold layer built with dbt
+├── docs/                       # Diagrams and lineage images
+│
+└── tests/
+    ├── conftest.py                             # Shared SparkSession fixture
+    ├── test_citibike_utils.py                  # Unit tests — citibike transformations
+    ├── test_datetime_utils.py                  # Unit tests — datetime helpers
+    ├── test_citibike_scenarios.py              # Unit tests — scenario-based edge cases
+    └── test_citibike_catalog_integration.py    # Integration tests — real catalog via Databricks Connect
+```
 
 ---
 
@@ -45,8 +84,7 @@ dbt_gold/
 │   └── sources/
 ├── macros/
 ├── snapshots/
-├── tests/
-└── target/
+└── tests/
 ```
 
 ### dbt Highlights
@@ -54,6 +92,7 @@ dbt_gold/
 - Incremental fact models with merge strategy
 - Late-arriving data handling with lookback logic
 - Surrogate key generation using `dbt_utils`
+- Python model
 - Snapshot-based SCD2 history tracking
 - Generic tests, singular tests, custom generic tests, source tests, and unit tests
 - Source freshness and state-based workflows
@@ -90,14 +129,19 @@ The [fact_payments.sql](dbt_gold/models/facts/fact_payments.sql) model is a stro
 
 ## iGaming DAB Project
 
-The iGaming DAB implementation is presented here under the `gaming_lakehouse` project name.
 It handles three country datasets - Austria, Germany, and Denmark - with country-specific Bronze and Silver processing, then a unified Gold layer built from the shared Silver tables using `country_id`.
 
 ### Folder Structure
 
 ```text
-dab_project/
-└── ...
+gaming_lakehouse/
+├── scripts/
+│   └── 03_gold/
+├── resources/
+│   ├── jobs/
+│   └── pipelines/
+├── docs/
+└── dbt_gold/
 ```
 
 ### End-to-End Execution Flow
@@ -172,41 +216,6 @@ These images show the databricks job-task flow and dbt model lineage.
 
 ---
 
-## Repository Structure
-
-```
-dab_project/
-├── databricks.yml              # DAB bundle config — targets: dev, test, prod
-├── pyproject.toml              # Python project metadata and dev dependencies
-├── requirements_pyspark.txt    # Local PySpark unit test venv dependencies
-├── requirements_dbc.txt        # Databricks Connect integration test venv dependencies
-├── .coveragerc                 # pytest-cov configuration (source=src, show_missing=True)
-│
-├── src/                        # Importable Python source code (tested locally)
-│   ├── citibike/
-│   │   └── citibike_utils.py   # Bronze→Silver→Gold transformation functions
-│   └── utils/
-│       └── datetime_utils.py   # Shared datetime helpers
-│
-├── citibike_etl/               # Databricks pipeline code (runs on cluster)
-│   ├── dlt/                    # Delta Live Tables pipeline scripts
-│   ├── notebooks/              # Jupyter notebooks (Bronze / Silver / Gold)
-│   └── scripts/                # Plain Python scripts
-│
-├── resources/                  # DAB resource definitions
-│   ├── jobs/                   # Workflow job YAML configs
-│   └── pipelines/              # DLT pipeline YAML configs
-│
-└── tests/
-    ├── conftest.py                             # Shared SparkSession fixture
-    ├── test_citibike_utils.py                  # Unit tests — citibike transformations
-    ├── test_datetime_utils.py                  # Unit tests — datetime helpers
-    ├── test_citibike_scenarios.py              # Unit tests — scenario-based edge cases
-    └── test_citibike_catalog_integration.py    # Integration tests — real catalog via Databricks Connect
-```
-
----
-
 ## Getting Started
 
 Use two Python environments when you work on the Citibike project:
@@ -268,46 +277,23 @@ Silver tables hold the latest valid version of each record using merge/upsert lo
 | `silver` | `userdata` |
 | `silver` | `userlimit` |
 
-### Gold layer: star schema for BI
-
-Gold tables are built with dbt in the `gold` schema and are organized for BI consumption.
-
-| Schema | Table |
-|---|---|
-| `gold` | `dim_date_spine` |
-| `gold` | `dim_date_time` |
-| `gold` | `dim_game` |
-| `gold` | `dim_payment_method` |
-| `gold` | `dim_player` |
-| `gold` | `dim_tag` |
-| `gold` | `dim_userlimit` |
-| `gold` | `fact_game_revenue` |
-| `gold` | `fact_gameround` |
-| `gold` | `fact_gametransaction_kpi` |
-| `gold` | `fact_payments` |
-| `gold` | `mart_gameround_hourly` |
-| `gold` | `mart_pc_account_signup` |
-
 ### dbt Gold schema
 
 The iGaming Gold layer is built with dbt in the `gold` schema.
 
-```text
--- Dimensions
-igaming_dev.gold.dim_date_spine
-igaming_dev.gold.dim_date_time
-igaming_dev.gold.dim_game
-igaming_dev.gold.dim_payment_method
-
--- Facts
-igaming_dev.gold.fact_payments
-igaming_dev.gold.fact_game_revenue
-igaming_dev.gold.fact_gameround
-igaming_dev.gold.fact_gametransaction_kpi
-
--- Snapshots (SCD2) history tables
-igaming_dev.gold.dim_player
-igaming_dev.gold.dim_tag
-igaming_dev.gold.dim_userlimit
-```
+| Schema | Table Name | Type |
+|---|---|---|
+| `gold` | `dim_date_spine` | Dimension |
+| `gold` | `dim_date_time` | Dimension |
+| `gold` | `dim_game` | Dimension |
+| `gold` | `dim_payment_method` | Dimension |
+| `gold` | `fact_payments` | Fact |
+| `gold` | `fact_game_revenue` | Fact |
+| `gold` | `fact_gameround` | Fact |
+| `gold` | `fact_gametransaction_kpi` | Fact |
+| `gold` | `dim_player` | Snapshot / SCD2 |
+| `gold` | `dim_tag` | Snapshot / SCD2 |
+| `gold` | `dim_userlimit` | Snapshot / SCD2 |
+| `gold` | `mart_gameround_hourly` | Mart |
+| `gold` | `mart_pc_account_signup` | Mart |
 
