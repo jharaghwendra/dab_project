@@ -4,7 +4,7 @@ models:
   - name: fact_payments
     description: >
       One row per payment event. Incremental merge on paymentId.
-      Source: tma_dev.silver.payment
+      Source: igaming_dev.silver.payment
 
     columns:
       - name: paymentId

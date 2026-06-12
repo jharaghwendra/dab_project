@@ -1,6 +1,6 @@
 """Integration tests that run against the real citibike_dev Databricks catalog.
 
-Unlike the unit tests (test_citibike_interview_scenarios.py) which use tiny
+Unlike the unit tests (test_citibike_scenarios.py) which use tiny
 hardcoded data, these tests read actual catalog tables via Databricks Connect
 and assert DATA QUALITY RULES instead of exact values.
 
@@ -47,7 +47,7 @@ def dbc_spark():
 
 
 def test_01_bronze_table_has_rows(dbc_spark):
-    # Baby idea: bronze table must have data loaded — empty means pipeline never ran.
+    #  Test: bronze table must have data loaded — empty means pipeline never ran.
     # Rule: row count > 0
     df = dbc_spark.read.table(f"{CATALOG}.01_bronze.jc_citibike")
 
@@ -56,7 +56,7 @@ def test_01_bronze_table_has_rows(dbc_spark):
 
 
 def test_02_bronze_ride_id_is_never_null(dbc_spark):
-    # Baby idea: ride_id is the primary key — a null means bad ingestion.
+    #  Test: ride_id is the primary key — a null means bad ingestion.
     # Rule: zero rows where ride_id IS NULL
     df = dbc_spark.read.table(f"{CATALOG}.01_bronze.jc_citibike")
 
@@ -66,7 +66,7 @@ def test_02_bronze_ride_id_is_never_null(dbc_spark):
 
 
 def test_03_bronze_started_at_before_ended_at_for_most_rows(dbc_spark):
-    # Baby idea: for valid rides, start time must be before end time.
+    #  Test: for valid rides, start time must be before end time.
     # Rule: at least 99% of rows have started_at <= ended_at  (allow tiny % of bad data)
     df = dbc_spark.read.table(f"{CATALOG}.01_bronze.jc_citibike")
 
@@ -83,7 +83,7 @@ def test_03_bronze_started_at_before_ended_at_for_most_rows(dbc_spark):
 
 
 def test_04_silver_has_contract_columns(dbc_spark):
-    # Baby idea: silver schema must match the agreed contract — no column renames allowed.
+    #  Test: silver schema must match the agreed contract — no column renames allowed.
     # Rule: exact column list matches
     df = dbc_spark.read.table(f"{CATALOG}.02_silver.jc_citibike")
 
@@ -102,7 +102,7 @@ def test_04_silver_has_contract_columns(dbc_spark):
 
 
 def test_05_silver_trip_duration_mins_not_null(dbc_spark):
-    # Baby idea: trip_duration_mins is a computed column — null means the function failed.
+    #  Test: trip_duration_mins is a computed column — null means the function failed.
     # Rule: zero null trip_duration_mins
     df = dbc_spark.read.table(f"{CATALOG}.02_silver.jc_citibike")
 
@@ -112,7 +112,7 @@ def test_05_silver_trip_duration_mins_not_null(dbc_spark):
 
 
 def test_06_silver_trip_start_date_not_null(dbc_spark):
-    # Baby idea: trip_start_date is derived from started_at — null means timestamp_to_date failed.
+    #  Test: trip_start_date is derived from started_at — null means timestamp_to_date failed.
     # Rule: zero null trip_start_date values
     df = dbc_spark.read.table(f"{CATALOG}.02_silver.jc_citibike")
 
@@ -122,7 +122,7 @@ def test_06_silver_trip_start_date_not_null(dbc_spark):
 
 
 def test_07_silver_metadata_has_all_required_keys(dbc_spark):
-    # Baby idea: every row must carry pipeline lineage — missing keys mean broken metadata logic.
+    #  Test: every row must carry pipeline lineage — missing keys mean broken metadata logic.
     # Rule: first row metadata map contains all 4 expected keys
     df = dbc_spark.read.table(f"{CATALOG}.02_silver.jc_citibike")
 
@@ -140,7 +140,7 @@ def test_07_silver_metadata_has_all_required_keys(dbc_spark):
 
 
 def test_08_gold_daily_summary_one_row_per_date(dbc_spark):
-    # Baby idea: daily_ride_summary groups by date — duplicate dates mean groupBy is broken.
+    #  Test: daily_ride_summary groups by date — duplicate dates mean groupBy is broken.
     # Rule: total rows == distinct trip_start_date count
     df = dbc_spark.read.table(f"{CATALOG}.03_gold.daily_ride_summary")
 
@@ -153,7 +153,7 @@ def test_08_gold_daily_summary_one_row_per_date(dbc_spark):
 
 
 def test_09_gold_daily_summary_max_gte_avg_gte_min(dbc_spark):
-    # Baby idea: basic math — max can never be less than avg, avg can never be less than min.
+    #  Test: basic math — max can never be less than avg, avg can never be less than min.
     # Rule: zero rows where max < avg or avg < min
     from pyspark.sql.functions import col
 
@@ -169,7 +169,7 @@ def test_09_gold_daily_summary_max_gte_avg_gte_min(dbc_spark):
 
 
 def test_10_gold_station_performance_one_row_per_date_and_station(dbc_spark):
-    # Baby idea: groupBy(date, station) must produce unique combos — duplicates mean groupBy failed.
+    #  Test: groupBy(date, station) must produce unique combos — duplicates mean groupBy failed.
     # Rule: total rows == distinct (trip_start_date, start_station_name) combos
     df = dbc_spark.read.table(f"{CATALOG}.03_gold.daily_station_performance")
 

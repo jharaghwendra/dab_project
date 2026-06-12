@@ -165,8 +165,8 @@ dab_project/
     ├── conftest.py                             # Shared SparkSession fixture
     ├── test_citibike_utils.py                  # Unit tests — citibike transformations
     ├── test_datetime_utils.py                  # Unit tests — datetime helpers
-    ├── test_citibike_interview_scenarios.py    # Unit tests — scenario-based edge cases
-    └── test_citibike_catalog_integration.py   # Integration tests — real catalog via Databricks Connect
+    ├── test_citibike_scenarios.py              # Unit tests — scenario-based edge cases
+    └── test_citibike_catalog_integration.py    # Integration tests — real catalog via Databricks Connect
 ```
 
 ---

@@ -16,7 +16,7 @@
 #   5. Explicit Spark schema   — avoids pandas type inference surprises
 #   6. return final_df         — must return exactly one DataFrame
 #
-# Output: tma_dev.gold.dim_date_spine
+# Output: igaming_dev.gold.dim_date_spine
 # Primary key: (sk_date_time, timezone)
 # Grain: one row per UTC hour × timezone (UTC + Europe/Vienna)
 # Range: 2025-01-01 → 2026-12-31 (extendable by changing START/END below)

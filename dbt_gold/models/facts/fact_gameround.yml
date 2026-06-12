@@ -4,7 +4,7 @@ models:
   - name: fact_gameround
     description: >
       One row per game round. Incremental merge on gameRoundId.
-      Source: tma_dev.silver.gameround
+      Source: igaming_dev.silver.gameround
 
     columns:
       - name: gameRoundId

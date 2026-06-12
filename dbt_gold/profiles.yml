@@ -27,7 +27,7 @@ dbt_gold:
   outputs:
     dev:
       type: databricks
-      catalog: "{{ env_var('DBT_CATALOG', 'tma_dev') }}"
+      catalog: "{{ env_var('DBT_CATALOG', 'igaming_dev') }}"
       schema: gold
       host: "{{ env_var('DATABRICKS_HOST', 'dbc-71b2b101-72ab.cloud.databricks.com') }}"
       http_path: "{{ env_var('DBT_HTTP_PATH', '/sql/1.0/warehouses/9299d8e6b7abab31') }}"
@@ -38,7 +38,7 @@ dbt_gold:
 
     test:
       type: databricks
-      catalog: "{{ env_var('DBT_CATALOG', 'tma_dev') }}"
+      catalog: "{{ env_var('DBT_CATALOG', 'igaming_test') }}"
       schema: gold
       host: "{{ env_var('DATABRICKS_HOST', 'dbc-71b2b101-72ab.cloud.databricks.com') }}"
       http_path: "{{ env_var('DBT_HTTP_PATH', '/sql/1.0/warehouses/9299d8e6b7abab31') }}"
@@ -49,7 +49,7 @@ dbt_gold:
 
     prod:
       type: databricks
-      catalog: "{{ env_var('DBT_CATALOG', 'tma_prod') }}"
+      catalog: "{{ env_var('DBT_CATALOG', 'igaming_prod') }}"
       schema: gold
       host: "{{ env_var('DATABRICKS_HOST', 'dbc-71b2b101-72ab.cloud.databricks.com') }}"
       http_path: "{{ env_var('DBT_HTTP_PATH', '/sql/1.0/warehouses/9299d8e6b7abab31') }}"

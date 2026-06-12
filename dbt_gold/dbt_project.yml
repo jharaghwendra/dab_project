@@ -51,6 +51,6 @@ models:
 
 snapshots:
   dbt_gold:
-    +target_schema: gold       # snapshots land in tma_dev.gold alongside dims/facts — single schema for BI
+    +target_schema: gold       # snapshots land in igaming_dev.gold alongside dims/facts — single schema for BI
     +file_format: delta
     +invalidate_hard_deletes: true

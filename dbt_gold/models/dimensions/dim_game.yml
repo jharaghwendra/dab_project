@@ -4,7 +4,7 @@ models:
   - name: dim_game
     description: >
       Game catalog dimension. One row per unique game (gameId).
-      Source: tma_dev.silver.game
+      Source: igaming_dev.silver.game
 
     columns:
       - name: sk_game

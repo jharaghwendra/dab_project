@@ -4,7 +4,7 @@ models:
   - name: dim_payment_method
     description: >
       Payment method dimension. One row per unique payment method.
-      Source: tma_dev.silver.payment
+      Source: igaming_dev.silver.payment
 
     columns:
       - name: sk_payment_method

@@ -31,7 +31,7 @@
 #                           (WHERE dbt_valid_to = '9999-12-31' AND active = true
 #                            AND targetType = 'User')
 #
-# OUTPUT: tma_dev.gold.mart_pc_account_signup
+# OUTPUT: igaming_dev.gold.mart_pc_account_signup
 #   One row per player (userId + country_code).
 #   Key columns:
 #     online_customer_id  — userId cast to string (PC endpoint field name)

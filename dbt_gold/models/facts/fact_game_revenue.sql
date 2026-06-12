@@ -1,5 +1,5 @@
 -- fact_game_revenue: grain = one row per game transaction
--- Source: tma_dev.silver.gametransaction
+-- Source: igaming_dev.silver.gametransaction
 -- Incremental merge on gameTransactionId
 -- TODO: implement
 
