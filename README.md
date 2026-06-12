@@ -199,40 +199,58 @@ For exact install and run commands, use the test and deploy sections above and b
 
 ## Catalog Structure (igaming_dev)
 
-| Layer | Schema | Table |
-|---|---|---|
-| Bronze | `bronze` | `brandgame` |
-| Bronze | `bronze` | `check` |
-| Bronze | `bronze` | `game` |
-| Bronze | `bronze` | `gameround` |
-| Bronze | `bronze` | `gametransaction` |
-| Bronze | `bronze` | `payment` |
-| Bronze | `bronze` | `tag` |
-| Bronze | `bronze` | `userdata` |
-| Bronze | `bronze` | `userlimit` |
-| Silver | `silver` | `brandgame` |
-| Silver | `silver` | `check` |
-| Silver | `silver` | `game` |
-| Silver | `silver` | `gameround` |
-| Silver | `silver` | `gametransaction` |
-| Silver | `silver` | `payment` |
-| Silver | `silver` | `silver_gametransaction` |
-| Silver | `silver` | `tag` |
-| Silver | `silver` | `userdata` |
-| Silver | `silver` | `userlimit` |
-| Gold | `gold` | `dim_date_spine` |
-| Gold | `gold` | `dim_date_time` |
-| Gold | `gold` | `dim_game` |
-| Gold | `gold` | `dim_payment_method` |
-| Gold | `gold` | `dim_player` |
-| Gold | `gold` | `dim_tag` |
-| Gold | `gold` | `dim_userlimit` |
-| Gold | `gold` | `fact_game_revenue` |
-| Gold | `gold` | `fact_gameround` |
-| Gold | `gold` | `fact_gametransaction_kpi` |
-| Gold | `gold` | `fact_payments` |
-| Gold | `gold` | `mart_gameround_hourly` |
-| Gold | `gold` | `mart_pc_account_signup` |
+Raw source data lands from the AWS S3 data lake into the `bronze` schema. Bronze keeps source-aligned tables, Silver applies deduplication and SCD Type 1 merge/upsert logic with tight schema enforcement, and Gold is dbt modeled as a star schema ready for the BI team.
+
+### Bronze layer: raw source tables
+
+| Schema | Table |
+|---|---|
+| `bronze` | `brandgame` |
+| `bronze` | `check` |
+| `bronze` | `game` |
+| `bronze` | `gameround` |
+| `bronze` | `gametransaction` |
+| `bronze` | `payment` |
+| `bronze` | `tag` |
+| `bronze` | `userdata` |
+| `bronze` | `userlimit` |
+
+### Silver layer: cleaned and deduplicated tables
+
+Silver tables hold the latest valid version of each record using merge/upsert logic, deduplication, and schema enforcement.
+
+| Schema | Table |
+|---|---|
+| `silver` | `brandgame` |
+| `silver` | `check` |
+| `silver` | `game` |
+| `silver` | `gameround` |
+| `silver` | `gametransaction` |
+| `silver` | `payment` |
+| `silver` | `silver_gametransaction` |
+| `silver` | `tag` |
+| `silver` | `userdata` |
+| `silver` | `userlimit` |
+
+### Gold layer: star schema for BI
+
+Gold tables are built with dbt in the `gold` schema and are organized for BI consumption.
+
+| Schema | Table |
+|---|---|
+| `gold` | `dim_date_spine` |
+| `gold` | `dim_date_time` |
+| `gold` | `dim_game` |
+| `gold` | `dim_payment_method` |
+| `gold` | `dim_player` |
+| `gold` | `dim_tag` |
+| `gold` | `dim_userlimit` |
+| `gold` | `fact_game_revenue` |
+| `gold` | `fact_gameround` |
+| `gold` | `fact_gametransaction_kpi` |
+| `gold` | `fact_payments` |
+| `gold` | `mart_gameround_hourly` |
+| `gold` | `mart_pc_account_signup` |
 
 ### dbt Gold schema
 
