@@ -1,4 +1,4 @@
-# Databricks Lakehouse Asset Bundle Projects
+# Databricks Lakehouse Projects with DAB (Databricks Asset Bundle) 
 
 This repository contains three Databricks deliverables:
 
