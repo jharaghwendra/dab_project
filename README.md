@@ -195,3 +195,65 @@ For exact install and run commands, use the test and deploy sections above and b
 | Gold | `03_gold` | `daily_ride_summary` | Daily aggregated ride KPIs |
 | Gold | `03_gold` | `daily_station_performance` | Daily per-station performance metrics |
 
+---
+
+## Catalog Structure (igaming_dev)
+
+| Layer | Schema | Table |
+|---|---|---|
+| Bronze | `bronze` | `brandgame` |
+| Bronze | `bronze` | `check` |
+| Bronze | `bronze` | `game` |
+| Bronze | `bronze` | `gameround` |
+| Bronze | `bronze` | `gametransaction` |
+| Bronze | `bronze` | `payment` |
+| Bronze | `bronze` | `tag` |
+| Bronze | `bronze` | `userdata` |
+| Bronze | `bronze` | `userlimit` |
+| Silver | `silver` | `brandgame` |
+| Silver | `silver` | `check` |
+| Silver | `silver` | `game` |
+| Silver | `silver` | `gameround` |
+| Silver | `silver` | `gametransaction` |
+| Silver | `silver` | `payment` |
+| Silver | `silver` | `silver_gametransaction` |
+| Silver | `silver` | `tag` |
+| Silver | `silver` | `userdata` |
+| Silver | `silver` | `userlimit` |
+| Gold | `gold` | `dim_date_spine` |
+| Gold | `gold` | `dim_date_time` |
+| Gold | `gold` | `dim_game` |
+| Gold | `gold` | `dim_payment_method` |
+| Gold | `gold` | `dim_player` |
+| Gold | `gold` | `dim_tag` |
+| Gold | `gold` | `dim_userlimit` |
+| Gold | `gold` | `fact_game_revenue` |
+| Gold | `gold` | `fact_gameround` |
+| Gold | `gold` | `fact_gametransaction_kpi` |
+| Gold | `gold` | `fact_payments` |
+| Gold | `gold` | `mart_gameround_hourly` |
+| Gold | `gold` | `mart_pc_account_signup` |
+
+### dbt Gold schema
+
+The iGaming Gold layer is built with dbt in the `gold` schema.
+
+```text
+-- Dimensions
+igaming_dev.gold.dim_date_spine
+igaming_dev.gold.dim_date_time
+igaming_dev.gold.dim_game
+igaming_dev.gold.dim_payment_method
+
+-- Facts
+igaming_dev.gold.fact_payments
+igaming_dev.gold.fact_game_revenue
+igaming_dev.gold.fact_gameround
+igaming_dev.gold.fact_gametransaction_kpi
+
+-- Snapshots (SCD2) history tables
+igaming_dev.gold.dim_player
+igaming_dev.gold.dim_tag
+igaming_dev.gold.dim_userlimit
+```
+
