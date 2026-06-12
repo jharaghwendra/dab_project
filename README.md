@@ -1,46 +1,138 @@
-# Gaming Lakehouse Project (iGaming Data Migration)
+# Databricks Lakehouse Asset Bundle Projects
 
-This project demonstrates a modern Lakehouse architecture for real-world iGaming data, migrated from an on-premise Talend/MySQL stack to Databricks using the Medallion (Bronze-Silver-Gold) pattern.
+This repository contains three Databricks deliverables:
+
+- a Citibike Databricks Asset Bundle project with its own catalog and schema
+- an iGaming Databricks Asset Bundle project presented under the `gaming_lakehouse` project name
+- an iGaming dbt Gold-layer project in `dbt_gold/`
+
+Together they show how I build Databricks projects across ingestion, transformation, orchestration, testing, and Gold-layer modeling.
+
+---
+
+## Project Overview
+
+- Citibike DAB: separate catalog/schema, Bronze-Silver-Gold processing, local and Databricks Connect tests
+- iGaming DAB: delivered under the `gaming_lakehouse` name, Bronze-Silver processing with jobs and pipelines in `resources/jobs/` and `resources/pipelines/`
+- iGaming dbt Gold layer: located in `dbt_gold/` with incremental models, tests, snapshots, and CI/CD workflows to support the iGaming BI platform
+
+## Where To Look
+
+| What you want to see | Where to look |
+|---|---|
+| Citibike DAB project | [Repository Structure](#repository-structure), [Catalog Structure](#catalog-structure-citibike_dev), [Getting Started](#getting-started) |
+| iGaming DAB project | [iGaming DAB Project](#igaming-dab-project), especially [resources/jobs](resources/jobs) and [resources/pipelines](resources/pipelines) |
+| iGaming dbt Gold layer | [dbt Work](#dbt-work), especially [dbt_gold](dbt_gold) and [fact_payments.sql](dbt_gold/models/facts/fact_payments.sql) |
+| CI/CD workflow | [CI/CD Workflow](#cicd-workflow), especially [.github/workflows/ci-workflow.yml](.github/workflows/ci-workflow.yml) and [.github/workflows/cd-workflow.yml](.github/workflows/cd-workflow.yml) |
+| Setup and environment | This section below, kept intentionally short |
+
+---
+
+## dbt Work
+
+The dbt work for the iGaming project lives in [dbt_gold](dbt_gold) and follows a standard analytics-engineering structure.
+
+### Location
+
+```text
+dbt_gold/
+├── dbt_project.yml
+├── profiles.yml
+├── models/
+│   ├── facts/
+│   ├── dimensions/
+│   ├── marts/
+│   └── sources/
+├── macros/
+├── snapshots/
+├── tests/
+└── target/
+```
+
+### dbt Highlights
+
+- Incremental fact models with merge strategy
+- Late-arriving data handling with lookback logic
+- Surrogate key generation using `dbt_utils`
+- Snapshot-based SCD2 history tracking
+- Generic tests, singular tests, custom generic tests, source tests, and unit tests
+- Source freshness and state-based workflows
+- Documentation-ready model structure for analytics consumers
+
+These pieces show how I handle late-arriving data, preserve history, validate models at multiple layers, and keep downstream reporting stable.
+
+### Strong dbt example: `fact_payments`
+
+The [fact_payments.sql](dbt_gold/models/facts/fact_payments.sql) model is a strong example of production-style dbt design:
+
+- incremental `merge` strategy
+- 2-day lookback for late-arriving status updates
+- surrogate key generation via `dbt_utils`
+- business-rule logic for declined deposit retries and first-deposit flags
+- timezone-aware date handling
+- BI-friendly denormalized output for downstream reporting tools
+
+### Testing and quality checks
+
+- Generic tests in YAML for column integrity
+- Singular tests in `tests/` for business rules
+- Custom generic tests in `macros/` for reusable validations
+- Unit tests in model YAML for isolated SQL logic
+- Source tests and source freshness checks for upstream reliability
+
+### Dev and delivery workflow
+
+- Local validation through dbt test commands
+- CI/CD automation via GitHub workflows
+- Separate dev, test, and prod targets in the dbt profile
+
+---
+
+## iGaming DAB Project
+
+The iGaming DAB implementation is presented here under the `gaming_lakehouse` project name:
 
 ### Folder Structure
 
-```
-gaming_lakehouse/
-└── scripts/
-    ├── 01_bronze/      # Ingestion scripts (Auto Loader from S3 to Bronze)
-    ├── 02_silver/      # Deduplication & current-state scripts (Bronze → Silver)
-    └── 03_gold_dbt/    # dbt models for Gold layer (star schema, marts)
+```text
+dab_project/
+└── ...
 ```
 
 ### End-to-End Execution Flow
 
-- **Job 1: DE (Germany)**
-- **Job 2: AT (Austria)**
-- **Job 3: DK (Denmark)**
-
-Each job runs every 10 minutes and processes 26 tables in parallel:
-
-| Stage         | Task Example                | Dependency                |
-|---------------|----------------------------|---------------------------|
-| Bronze        | bronze_wallet              | None (starts at 0s)       |
-| Silver        | silver_wallet              | Waits for bronze_wallet   |
-| ...           | ...                        | ...                       |
-| Bronze        | bronze_gametransaction     | None (starts at 0s)       |
-| Silver        | silver_gametransaction     | Waits for bronze_gametransaction |
-| ...           | ...                        | ...                       |
-
-This pattern repeats for all 26 tables per country. Each Bronze task ingests raw Parquet data from S3, and each Silver task deduplicates and merges the latest versioned records.
+The pipeline is organized as Bronze, Silver, and Gold processing with Databricks Workflows and DLT.
+The DAB jobs and resources for that flow live under `resources/jobs/` and `resources/pipelines/`.
 
 ### Gold Layer
 
-- Gold models (star schema, marts, reporting tables) are built using dbt and Databricks Serverless SQL Warehouse, consuming the Silver layer as source.
+- Gold models are built with dbt and Databricks SQL Warehouse, consuming the prepared Silver layer as input.
 
---- --------------------------------------------------------------------------------------------------------------
-# dab_project — Citibike ETL Lakehouse (Databricks Asset Bundle)
+---
 
-A Databricks Asset Bundle (DAB) project implementing a Bronze-Silver-Gold Medallion
-architecture for Citibike trip data using Delta Lake, Delta Live Tables (DLT),
-and Databricks Workflows..
+## CI/CD Workflow
+
+The GitHub Actions workflows live in [.github/workflows](.github/workflows).
+
+### CI workflow: [.github/workflows/ci-workflow.yml](.github/workflows/ci-workflow.yml)
+
+- Runs on feature branches and pull requests into `main`
+- Sets up Python, installs dependencies, runs pytest, and publishes coverage
+- Runs `dbt parse` so SQL and model references are checked before deployment
+
+### CD workflow: [.github/workflows/cd-workflow.yml](.github/workflows/cd-workflow.yml)
+
+- Runs when code lands on `main`
+- Deploys the bundle to the test environment first
+- Then deploys to prod after the test deploy succeeds and the prod environment gate allows it
+- Uses Databricks CLI and bundle deploy commands for the release step
+
+### What this shows
+
+- Pull requests are validated before merge
+- Test deployment is automated from the main branch
+- Prod deployment is separated from test and can be protected by environment approval
+- The same bundle is promoted through the release flow instead of maintaining separate deploy logic per environment
 
 ---
 
@@ -79,162 +171,18 @@ dab_project/
 
 ---
 
-## Prerequisites
+## Getting Started
 
-Before setting up the project, ensure the following are installed:
+Use two Python environments when you work on the Citibike project:
 
-| Requirement | Version | Notes |
-|---|---|---|
-| Python | 3.10 – 3.12 | Required by `pyproject.toml` |
-| Java (JDK) | 17 or later | Required by PySpark local mode (`JAVA_HOME` must be set) |
-| Databricks CLI | Latest | For bundle deploy commands — `pip install databricks-cli` |
-| VS Code | Latest | Recommended IDE |
-| Databricks VS Code Extension | Latest | For workspace connection and notebook execution |
+- `.venv_pyspark` for local unit tests and source development
+- `.venv_dbc` for Databricks Connect tests and notebook-style work
 
-Verify Java is configured correctly:
-```powershell
-java -version        # should show 17+
-echo $env:JAVA_HOME  # should point to your JDK installation
-```
+Databricks authentication comes from `~/.databrickscfg`, and the Databricks CLI is used for bundle deploy and run commands.
 
----
+VS Code is most useful here when the Databricks extension is installed and the right interpreter is selected for the file you are editing.
 
-## Two Virtual Environments
-
-This project uses **two separate Python virtual environments** — one for each testing mode:
-
-| Environment | Purpose | Key packages |
-|---|---|---|
-| `.venv_pyspark` | Local unit tests using a local PySpark session (no Databricks connection needed) | `pyspark`, `pytest`, `pytest-cov` |
-| `.venv_dbc` | Integration tests against the real `citibike_dev` Databricks catalog via Databricks Connect | `databricks-connect`, `databricks-sdk`, `pytest` |
-
----
-
-## Setup: `.venv_pyspark` (Local Unit Tests)
-
-```powershell
-# 1. Create the virtual environment
-python -m venv .venv_pyspark
-
-# 2. Activate it
-.venv_pyspark\Scripts\Activate.ps1
-
-# 3. Install dependencies
-pip install -r requirements_pyspark.txt
-
-# 4. Install this project in editable mode (so src/ is importable)
-pip install -e .
-```
-
-Verify setup:
-```powershell
-python -c "import pyspark; print(pyspark.__version__)"
-```
-
----
-
-## Setup: `.venv_dbc` (Databricks Connect Integration Tests)
-
-```powershell
-# 1. Create the virtual environment
-python -m venv .venv_dbc
-
-# 2. Activate it
-.venv_dbc\Scripts\Activate.ps1
-
-# 3. Install dependencies
-pip install -r requirements_dbc.txt
-
-# 4. Install this project in editable mode
-pip install -e .
-```
-
-### Configure Databricks Authentication
-
-Databricks Connect reads credentials from `~/.databrickscfg`. Configure it once:
-
-```powershell
-databricks configure
-# Enter: Databricks workspace URL and personal access token
-```
-
-Verify connection:
-```powershell
-databricks auth describe
-```
-
-> **Note:** If you have multiple profiles in `~/.databrickscfg` pointing to the same host,
-> set the profile explicitly before running tests:
-> ```powershell
-> $env:DATABRICKS_CONFIG_PROFILE="DEFAULT"
-> ```
-
----
-
-## Running Tests
-
-### Unit Tests (requires `.venv_pyspark`)
-
-```powershell
-.venv_pyspark\Scripts\Activate.ps1
-
-# Run all unit tests
-pytest tests/test_citibike_utils.py tests/test_datetime_utils.py -vv
-
-# Run with coverage report
-pytest tests/test_citibike_utils.py tests/test_datetime_utils.py --cov -vv
-
-# Run with HTML coverage report (open htmlcov/index.html afterwards)
-pytest tests/test_citibike_utils.py tests/test_datetime_utils.py --cov --cov-report=html -vv
-Invoke-Item htmlcov\index.html
-```
-
-### Integration Tests (requires `.venv_dbc` + Databricks auth)
-
-These tests read real tables from the `citibike_dev` catalog via Databricks Connect.
-They are **automatically skipped** when running with `.venv_pyspark`.
-
-```powershell
-.venv_dbc\Scripts\Activate.ps1
-$env:DATABRICKS_CONFIG_PROFILE="DEFAULT"
-
-pytest tests/test_citibike_catalog_integration.py -vv
-```
-
----
-
-## Deploying the Bundle (Databricks CLI)
-
-```powershell
-# Authenticate (once)
-databricks configure
-
-# Deploy to dev environment
-databricks bundle deploy --target dev
-
-# Deploy to test environment
-databricks bundle deploy --target test
-
-# Deploy to production
-databricks bundle deploy --target prod
-
-# Run a specific job after deploying
-databricks bundle run citibike_etl_pipeline --target dev
-```
-
----
-
-## VS Code Setup
-
-1. Install the **Databricks** extension (`ms-databricks.databricks`)
-2. Connect to your workspace via the Databricks sidebar
-3. Select the Python interpreter for each file type:
-   - For `tests/test_citibike_utils.py` → select `.venv_pyspark`
-   - For `tests/test_citibike_catalog_integration.py` → select `.venv_dbc`
-   - For `citibike_etl/notebooks/*.ipynb` → select `.venv_dbc`
-
-A `.vscode/extensions.json` file is committed to this repo with the recommended
-extensions list. VS Code will prompt you to install them when you open the project.
+For exact install and run commands, use the test and deploy sections above and below rather than duplicating them here.
 
 ---
 

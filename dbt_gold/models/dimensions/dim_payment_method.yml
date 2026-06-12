@@ -24,7 +24,7 @@ models:
           - not_null
 
       - name: gateway
-        description: "PSP routing gateway (PAYMENT_IQ, CASHPOINT etc.)"
+        description: "PSP routing gateway (PAYMENT_IQ, SPORTRADAR etc.)"
         tests:
           - not_null
 

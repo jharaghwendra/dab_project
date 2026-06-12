@@ -1,9 +1,9 @@
 # =============================================================================
-# dim_date_spine — dbt Python model (Phase 1: learning Python model mechanics)
+# dim_date_spine — dbt Python model (Phase 1: Python model mechanics)
 # =============================================================================
 # Equivalent to dim_date_time.sql — same output, written in Python.
 #
-# WHY Python here (learning exercise):
+# WHY Python here :
 #   SQL version uses Spark-specific: sequence(), explode(), make_timestamp(),
 #   from_utc_timestamp() — all Databricks/Spark SQL dialect.
 #   Python version uses pandas.date_range() — portable, readable, testable locally.
