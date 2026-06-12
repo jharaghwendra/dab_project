@@ -209,7 +209,7 @@ The `docs/` folder can hold the visual lineage artifacts for this project.
 
 Recommended image files:
 
-- `docs/igaming_bronze_silver_lineage.png` for the Bronze → Silver task graph across AT, DE, and DK
+- `docs/igaming_bronze_silver_job_DAG.png` for the Bronze → Silver task graph across AT, DE, and DK
 - `docs/igaming_gold_dbt_lineage.png` for the dbt Gold lineage showing snapshots, facts, dimensions, and marts
 
 These images show the databricks job-task flow and dbt model lineage.
