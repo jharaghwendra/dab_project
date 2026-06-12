@@ -134,14 +134,11 @@ It handles three country datasets - Austria, Germany, and Denmark - with country
 ### Folder Structure
 
 ```text
-gaming_lakehouse/
-├── scripts/
-│   └── 03_gold/
-├── resources/
-│   ├── jobs/
-│   └── pipelines/
-├── docs/
-└── dbt_gold/
+dab_project/
+├── gaming_lakehouse/   # iGaming DAB code and scripts
+├── resources/          # DAB jobs and pipelines
+├── dbt_gold/           # iGaming Gold layer built with dbt
+└── docs/               # diagrams and lineage images
 ```
 
 ### End-to-End Execution Flow
