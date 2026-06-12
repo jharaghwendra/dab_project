@@ -90,7 +90,8 @@ The [fact_payments.sql](dbt_gold/models/facts/fact_payments.sql) model is a stro
 
 ## iGaming DAB Project
 
-The iGaming DAB implementation is presented here under the `gaming_lakehouse` project name:
+The iGaming DAB implementation is presented here under the `gaming_lakehouse` project name.
+It handles three country datasets - Austria, Germany, and Denmark - with country-specific Bronze and Silver processing, then a unified Gold layer built from the shared Silver tables using `country_id`.
 
 ### Folder Structure
 
@@ -103,6 +104,24 @@ dab_project/
 
 The pipeline is organized as Bronze, Silver, and Gold processing with Databricks Workflows and DLT.
 The DAB jobs and resources for that flow live under `resources/jobs/` and `resources/pipelines/`.
+
+### Bronze and Silver jobs
+
+These jobs process each country separately in the Bronze and Silver layers:
+
+- `TMA Medallion Bronze and Silver AT`
+- `TMA Medallion Bronze and Silver DE`
+- `TMA Medallion Bronze and Silver DK`
+
+### Gold jobs
+
+These jobs read from the shared Silver layer, where the Silver tables hold the combined multi-country data using `country_id`:
+
+- `TMA Gold Dims Daily`
+- `TMA Gold Facts`
+- `TMA Gold Hourly Orchestrator`
+- `TMA Gold Marts PC`
+- `TMA Gold Snapshots Hourly`
 
 ### Gold Layer
 
