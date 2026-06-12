@@ -1,46 +1,30 @@
-# Gaming Lakehouse Project (iGaming Data Migration)
+# Databricks Lakehouse Projects with DAB (Databricks Asset Bundle)
 
-This project demonstrates a modern Lakehouse architecture for real-world iGaming data, migrated from an on-premise Talend/MySQL stack to Databricks using the Medallion (Bronze-Silver-Gold) pattern.
+This repository contains three Databricks deliverables:
 
-### Folder Structure
+- a Citibike Databricks Asset Bundle project with its own catalog and schema
+- an iGaming Databricks Asset Bundle project presented under the `gaming_lakehouse` project name
+- an iGaming dbt Gold-layer project in `dbt_gold/`
 
-```
-gaming_lakehouse/
-└── scripts/
-    ├── 01_bronze/      # Ingestion scripts (Auto Loader from S3 to Bronze)
-    ├── 02_silver/      # Deduplication & current-state scripts (Bronze → Silver)
-    └── 03_gold_dbt/    # dbt models for Gold layer (star schema, marts)
-```
+Together they show how I build Databricks projects across ingestion, transformation, orchestration, testing, and Gold-layer modeling.
 
-### End-to-End Execution Flow
+---
 
-- **Job 1: DE (Germany)**
-- **Job 2: AT (Austria)**
-- **Job 3: DK (Denmark)**
+## Project Overview
 
-Each job runs every 10 minutes and processes 26 tables in parallel:
+- Citibike DAB: separate catalog/schema, Bronze-Silver-Gold processing, local and Databricks Connect tests
+- iGaming DAB: multi-country Bronze-Silver processing with jobs and pipelines in `resources/jobs/` and `resources/pipelines/`
+- iGaming dbt Gold layer: located in `dbt_gold/` with incremental models, tests, snapshots, and CI/CD workflows to support the iGaming BI platform
 
-| Stage         | Task Example                | Dependency                |
-|---------------|----------------------------|---------------------------|
-| Bronze        | bronze_wallet              | None (starts at 0s)       |
-| Silver        | silver_wallet              | Waits for bronze_wallet   |
-| ...           | ...                        | ...                       |
-| Bronze        | bronze_gametransaction     | None (starts at 0s)       |
-| Silver        | silver_gametransaction     | Waits for bronze_gametransaction |
-| ...           | ...                        | ...                       |
+## Where To Look
 
-This pattern repeats for all 26 tables per country. Each Bronze task ingests raw Parquet data from S3, and each Silver task deduplicates and merges the latest versioned records.
-
-### Gold Layer
-
-- Gold models (star schema, marts, reporting tables) are built using dbt and Databricks Serverless SQL Warehouse, consuming the Silver layer as source.
-
---- --------------------------------------------------------------------------------------------------------------
-# dab_project — Citibike ETL Lakehouse (Databricks Asset Bundle)
-
-A Databricks Asset Bundle (DAB) project implementing a Bronze-Silver-Gold Medallion
-architecture for Citibike trip data using Delta Lake, Delta Live Tables (DLT),
-and Databricks Workflows..
+| What you want to see | Where to look |
+|---|---|
+| Citibike DAB project | [Repository Structure](#repository-structure), [Catalog Structure](#catalog-structure-citibike_dev), [Getting Started](#getting-started) |
+| iGaming DAB project | [iGaming DAB Project](#igaming-dab-project), especially [resources/jobs](resources/jobs) and [resources/pipelines](resources/pipelines) |
+| iGaming dbt Gold layer | [dbt Work](#dbt-work), especially [dbt_gold](dbt_gold) and [fact_payments.sql](dbt_gold/models/facts/fact_payments.sql) |
+| CI/CD workflow | [CI/CD Workflow](#cicd-workflow), especially [.github/workflows/ci-workflow.yml](.github/workflows/ci-workflow.yml) and [.github/workflows/cd-workflow.yml](.github/workflows/cd-workflow.yml) |
+| Setup and environment | This section below, kept intentionally short |
 
 ---
 
@@ -65,176 +49,185 @@ dab_project/
 │   ├── notebooks/              # Jupyter notebooks (Bronze / Silver / Gold)
 │   └── scripts/                # Plain Python scripts
 │
+├── gaming_lakehouse/           # iGaming DAB project code and scripts
 ├── resources/                  # DAB resource definitions
 │   ├── jobs/                   # Workflow job YAML configs
 │   └── pipelines/              # DLT pipeline YAML configs
+│
+├── dbt_gold/                   # iGaming Gold layer built with dbt
+├── docs/                       # Diagrams and lineage images
 │
 └── tests/
     ├── conftest.py                             # Shared SparkSession fixture
     ├── test_citibike_utils.py                  # Unit tests — citibike transformations
     ├── test_datetime_utils.py                  # Unit tests — datetime helpers
-    ├── test_citibike_interview_scenarios.py    # Unit tests — scenario-based edge cases
-    └── test_citibike_catalog_integration.py   # Integration tests — real catalog via Databricks Connect
+    ├── test_citibike_scenarios.py              # Unit tests — scenario-based edge cases
+    └── test_citibike_catalog_integration.py    # Integration tests — real catalog via Databricks Connect
 ```
 
 ---
 
-## Prerequisites
+## dbt Work
 
-Before setting up the project, ensure the following are installed:
+The dbt work for the iGaming project lives in [dbt_gold](dbt_gold) and follows a standard analytics-engineering structure.
 
-| Requirement | Version | Notes |
-|---|---|---|
-| Python | 3.10 – 3.12 | Required by `pyproject.toml` |
-| Java (JDK) | 17 or later | Required by PySpark local mode (`JAVA_HOME` must be set) |
-| Databricks CLI | Latest | For bundle deploy commands — `pip install databricks-cli` |
-| VS Code | Latest | Recommended IDE |
-| Databricks VS Code Extension | Latest | For workspace connection and notebook execution |
+### Location
 
-Verify Java is configured correctly:
-```powershell
-java -version        # should show 17+
-echo $env:JAVA_HOME  # should point to your JDK installation
+```text
+dbt_gold/
+├── dbt_project.yml
+├── profiles.yml
+├── models/
+│   ├── facts/
+│   ├── dimensions/
+│   ├── marts/
+│   └── sources/
+├── macros/
+├── snapshots/
+└── tests/
 ```
+
+### dbt Highlights
+
+- Incremental fact models with merge strategy
+- Late-arriving data handling with lookback logic
+- Surrogate key generation using `dbt_utils`
+- Python model
+- Snapshot-based SCD2 history tracking
+- Generic tests, singular tests, custom generic tests, source tests, and unit tests
+- Source freshness and state-based workflows
+- Documentation-ready model structure for analytics consumers
+
+These pieces show how I handle late-arriving data, preserve history, validate models at multiple layers, and keep downstream reporting stable.
+
+### Strong dbt example: `fact_payments`
+
+The [fact_payments.sql](dbt_gold/models/facts/fact_payments.sql) model is a strong example of production-style dbt design:
+
+- incremental `merge` strategy
+- 2-day lookback for late-arriving status updates
+- surrogate key generation via `dbt_utils`
+- business-rule logic for declined deposit retries and first-deposit flags
+- timezone-aware date handling
+- BI-friendly denormalized output for downstream reporting tools
+
+### Testing and quality checks
+
+- Generic tests in YAML for column integrity
+- Singular tests in `tests/` for business rules
+- Custom generic tests in `macros/` for reusable validations
+- Unit tests in model YAML for isolated SQL logic
+- Source tests and source freshness checks for upstream reliability
+
+### Dev and delivery workflow
+
+- Local validation through dbt test commands
+- CI/CD automation via GitHub workflows
+- Separate dev, test, and prod targets in the dbt profile
 
 ---
 
-## Two Virtual Environments
+## iGaming DAB Project
 
-This project uses **two separate Python virtual environments** — one for each testing mode:
+It handles three country datasets - Austria, Germany, and Denmark - with country-specific Bronze and Silver processing, then a unified Gold layer built from the shared Silver tables using `country_id`.
 
-| Environment | Purpose | Key packages |
-|---|---|---|
-| `.venv_pyspark` | Local unit tests using a local PySpark session (no Databricks connection needed) | `pyspark`, `pytest`, `pytest-cov` |
-| `.venv_dbc` | Integration tests against the real `citibike_dev` Databricks catalog via Databricks Connect | `databricks-connect`, `databricks-sdk`, `pytest` |
+### Folder Structure
+
+```text
+gaming_lakehouse/
+├── scripts/
+│   └── 03_gold/
+├── resources/
+│   ├── jobs/
+│   └── pipelines/
+├── docs/
+└── dbt_gold/
+```
+
+### End-to-End Execution Flow
+
+The pipeline is organized as Bronze, Silver, and Gold processing with Databricks Workflows and DLT.
+The DAB jobs and resources for that flow live under `resources/jobs/` and `resources/pipelines/`.
+
+### Bronze and Silver jobs
+
+These jobs process each country separately in the Bronze and Silver layers:
+
+- `TMA Medallion Bronze and Silver AT`
+- `TMA Medallion Bronze and Silver DE`
+- `TMA Medallion Bronze and Silver DK`
+
+Each Bronze task lands raw country data from the source layer, and the matching Silver task applies the latest-record merge/upsert logic with deduplication and schema enforcement. That gives the job graph a clear Bronze → Silver task lineage for each country.
+
+### Gold jobs
+
+These jobs read from the shared Silver layer, where the Silver tables hold the combined multi-country data using `country_id`:
+
+- `TMA Gold Dims Daily`
+- `TMA Gold Facts`
+- `TMA Gold Hourly Orchestrator`
+- `TMA Gold Marts PC`
+- `TMA Gold Snapshots Hourly`
+
+The Gold lineage is dbt-driven: snapshots such as `dim_player`, `dim_tag`, and `dim_userlimit` feed downstream marts, while facts and dimensions are built from the shared Silver layer. Example lineage is `silver.userdata -> snapshot dim_player -> mart_pc_account_signup` and `silver.gameround -> fact_gameround -> mart_gameround_hourly`.
+
+### Gold Layer
+
+- Gold models are built with dbt and Databricks SQL Warehouse, consuming the prepared Silver layer as input.
 
 ---
 
-## Setup: `.venv_pyspark` (Local Unit Tests)
+## CI/CD Workflow
 
-```powershell
-# 1. Create the virtual environment
-python -m venv .venv_pyspark
+The GitHub Actions workflows live in [.github/workflows](.github/workflows).
 
-# 2. Activate it
-.venv_pyspark\Scripts\Activate.ps1
+### CI workflow: [.github/workflows/ci-workflow.yml](.github/workflows/ci-workflow.yml)
 
-# 3. Install dependencies
-pip install -r requirements_pyspark.txt
+- Runs on feature branches and pull requests into `main`
+- Sets up Python, installs dependencies, runs pytest, and publishes coverage
+- Runs `dbt parse` so SQL and model references are checked before deployment
 
-# 4. Install this project in editable mode (so src/ is importable)
-pip install -e .
-```
+### CD workflow: [.github/workflows/cd-workflow.yml](.github/workflows/cd-workflow.yml)
 
-Verify setup:
-```powershell
-python -c "import pyspark; print(pyspark.__version__)"
-```
+- Runs when code lands on `main`
+- Deploys the bundle to the test environment first
+- Then deploys to prod after the test deploy succeeds and the prod environment gate allows it
+- Uses Databricks CLI and bundle deploy commands for the release step
 
----
+### What this shows
 
-## Setup: `.venv_dbc` (Databricks Connect Integration Tests)
-
-```powershell
-# 1. Create the virtual environment
-python -m venv .venv_dbc
-
-# 2. Activate it
-.venv_dbc\Scripts\Activate.ps1
-
-# 3. Install dependencies
-pip install -r requirements_dbc.txt
-
-# 4. Install this project in editable mode
-pip install -e .
-```
-
-### Configure Databricks Authentication
-
-Databricks Connect reads credentials from `~/.databrickscfg`. Configure it once:
-
-```powershell
-databricks configure
-# Enter: Databricks workspace URL and personal access token
-```
-
-Verify connection:
-```powershell
-databricks auth describe
-```
-
-> **Note:** If you have multiple profiles in `~/.databrickscfg` pointing to the same host,
-> set the profile explicitly before running tests:
-> ```powershell
-> $env:DATABRICKS_CONFIG_PROFILE="DEFAULT"
-> ```
+- Pull requests are validated before merge
+- Test deployment is automated from the main branch
+- Prod deployment is separated from test and can be protected by environment approval
+- The same bundle is promoted through the release flow instead of maintaining separate deploy logic per environment
 
 ---
 
-## Running Tests
+## Docs And Lineage Images
 
-### Unit Tests (requires `.venv_pyspark`)
+The `docs/` folder can hold the visual lineage artifacts for this project.
 
-```powershell
-.venv_pyspark\Scripts\Activate.ps1
+Recommended image files:
 
-# Run all unit tests
-pytest tests/test_citibike_utils.py tests/test_datetime_utils.py -vv
+- `docs/igaming_bronze_silver_job_DAG.png` for the Bronze → Silver task graph across AT, DE, and DK
+- `docs/igaming_gold_dbt_lineage.png` for the dbt Gold lineage showing snapshots, facts, dimensions, and marts
 
-# Run with coverage report
-pytest tests/test_citibike_utils.py tests/test_datetime_utils.py --cov -vv
-
-# Run with HTML coverage report (open htmlcov/index.html afterwards)
-pytest tests/test_citibike_utils.py tests/test_datetime_utils.py --cov --cov-report=html -vv
-Invoke-Item htmlcov\index.html
-```
-
-### Integration Tests (requires `.venv_dbc` + Databricks auth)
-
-These tests read real tables from the `citibike_dev` catalog via Databricks Connect.
-They are **automatically skipped** when running with `.venv_pyspark`.
-
-```powershell
-.venv_dbc\Scripts\Activate.ps1
-$env:DATABRICKS_CONFIG_PROFILE="DEFAULT"
-
-pytest tests/test_citibike_catalog_integration.py -vv
-```
+These images show the databricks job-task flow and dbt model lineage.
 
 ---
 
-## Deploying the Bundle (Databricks CLI)
+## Getting Started
 
-```powershell
-# Authenticate (once)
-databricks configure
+Use two Python environments when you work on the Citibike project:
 
-# Deploy to dev environment
-databricks bundle deploy --target dev
+- `.venv_pyspark` for local unit tests and source development
+- `.venv_dbc` for Databricks Connect tests and notebook-style work
 
-# Deploy to test environment
-databricks bundle deploy --target test
+Databricks authentication comes from `~/.databrickscfg`, and the Databricks CLI is used for bundle deploy and run commands.
 
-# Deploy to production
-databricks bundle deploy --target prod
+VS Code is most useful here when the Databricks extension is installed and the right interpreter is selected for the file you are editing.
 
-# Run a specific job after deploying
-databricks bundle run citibike_etl_pipeline --target dev
-```
-
----
-
-## VS Code Setup
-
-1. Install the **Databricks** extension (`ms-databricks.databricks`)
-2. Connect to your workspace via the Databricks sidebar
-3. Select the Python interpreter for each file type:
-   - For `tests/test_citibike_utils.py` → select `.venv_pyspark`
-   - For `tests/test_citibike_catalog_integration.py` → select `.venv_dbc`
-   - For `citibike_etl/notebooks/*.ipynb` → select `.venv_dbc`
-
-A `.vscode/extensions.json` file is committed to this repo with the recommended
-extensions list. VS Code will prompt you to install them when you open the project.
+For exact install and run commands, use the test and deploy sections above and below rather than duplicating them here.
 
 ---
 
@@ -246,4 +239,61 @@ extensions list. VS Code will prompt you to install them when you open the proje
 | Silver | `02_silver` | `jc_citibike` | Cleaned, typed, deduplicated with metadata |
 | Gold | `03_gold` | `daily_ride_summary` | Daily aggregated ride KPIs |
 | Gold | `03_gold` | `daily_station_performance` | Daily per-station performance metrics |
+
+---
+
+## Catalog Structure (igaming_dev)
+
+Raw source data lands from the AWS S3 data lake into the `bronze` schema. Bronze keeps source-aligned tables, Silver applies deduplication and SCD Type 1 merge/upsert logic with tight schema enforcement, and Gold is dbt modeled as a star schema ready for the BI team.
+
+### Bronze layer: raw source tables
+
+| Schema | Table |
+|---|---|
+| `bronze` | `brandgame` |
+| `bronze` | `check` |
+| `bronze` | `game` |
+| `bronze` | `gameround` |
+| `bronze` | `gametransaction` |
+| `bronze` | `payment` |
+| `bronze` | `tag` |
+| `bronze` | `userdata` |
+| `bronze` | `userlimit` |
+
+### Silver layer: cleaned and deduplicated tables
+
+Silver tables hold the latest valid version of each record using merge/upsert logic, deduplication, and schema enforcement.
+
+| Schema | Table |
+|---|---|
+| `silver` | `brandgame` |
+| `silver` | `check` |
+| `silver` | `game` |
+| `silver` | `gameround` |
+| `silver` | `gametransaction` |
+| `silver` | `payment` |
+| `silver` | `silver_gametransaction` |
+| `silver` | `tag` |
+| `silver` | `userdata` |
+| `silver` | `userlimit` |
+
+### dbt Gold schema
+
+The iGaming Gold layer uses Kimball-style star-schema modeling in the `gold` schema and is built with dbt.
+
+| Schema | Table Name | Type |
+|---|---|---|
+| `gold` | `dim_date_spine` | Dimension |
+| `gold` | `dim_date_time` | Dimension |
+| `gold` | `dim_game` | Dimension |
+| `gold` | `dim_payment_method` | Dimension |
+| `gold` | `fact_payments` | Fact |
+| `gold` | `fact_game_revenue` | Fact |
+| `gold` | `fact_gameround` | Fact |
+| `gold` | `fact_gametransaction_kpi` | Fact |
+| `gold` | `dim_player` | Snapshot / SCD2 |
+| `gold` | `dim_tag` | Snapshot / SCD2 |
+| `gold` | `dim_userlimit` | Snapshot / SCD2 |
+| `gold` | `mart_gameround_hourly` | Mart |
+| `gold` | `mart_pc_account_signup` | Mart |
 

@@ -45,7 +45,7 @@ from pyspark.sql.functions import col, current_timestamp, lit
 #   databricks secrets put-secret --scope powercomply --key client_secret
 # =============================================================================
 
-CATALOG = "tma_dev"
+CATALOG = "igaming_dev"
 SCHEMA = "gold"
 TABLE = "mart_pc_account_signup"
 FULL_TABLE_NAME = f"{CATALOG}.{SCHEMA}.{TABLE}"
@@ -315,7 +315,7 @@ for idx, row in pending_df.iterrows():
 #
 # Dead-letter query for failed rows:
 #   SELECT online_customer_id, country_code, dispatch_error
-#   FROM tma_dev.gold.mart_pc_account_signup
+#   FROM igaming_dev.gold.mart_pc_account_signup
 #   WHERE dispatch_error IS NOT NULL AND dispatched_at IS NULL
 # =============================================================================
 

@@ -9,10 +9,10 @@ snapshots:
       Each row is one version of a limit — dbt_valid_from/dbt_valid_to define the active period.
       Current state (SCD1 equivalent): WHERE dbt_valid_to = cast('9999-12-31' as timestamp)
       Used for point-in-time compliance joins: what limit was active for player X on date Y?
-      Lives in tma_dev.gold alongside all dimensions and facts.
+      Lives in igaming_dev.gold alongside all dimensions and facts.
 
     config:
-      schema: gold                             # → tma_dev.gold.dim_userlimit
+      schema: gold                             # → igaming_dev.gold.dim_userlimit
       unique_key: [userLimitId, country_code] # composite PK — one limit can exist per country
       strategy: timestamp
       updated_at: updatedAt                   # dbt compares this on every run

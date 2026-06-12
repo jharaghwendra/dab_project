@@ -1,10 +1,10 @@
 """Unit tests for gaming_lakehouse.config.table_schemas.
 
-Baby idea: table_schemas.py is the single source of truth for all
+Idea: table_schemas.py is the single source of truth for all
 Silver table configs. These tests make sure the registry is correct
 and the lookup function behaves as expected — without needing Spark.
 
-How to read this file (baby steps):
+How to read this file (steps):
   Test 1 — are all 5 expected tables registered?
   Test 2 — does every registered table have a non-empty primary_key?
   Test 3 — does every registered table have a non-empty schema?
@@ -33,7 +33,7 @@ EXPECTED_TABLES = ["gametransaction", "userdata", "payment", "check", "gameround
 # Test 1 — all expected tables are registered
 # ---------------------------------------------------------------------------
 def test_01_all_expected_tables_are_registered():
-    # Baby idea: TABLE_CONFIGS must contain every table we know about.
+    # Test: TABLE_CONFIGS must contain every table we know about.
     # If someone removes a table by accident this test will catch it.
     for table in EXPECTED_TABLES:
         assert table in TABLE_CONFIGS, f"'{table}' is missing from TABLE_CONFIGS"
@@ -44,7 +44,7 @@ def test_01_all_expected_tables_are_registered():
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize("table_name", EXPECTED_TABLES)
 def test_02_every_table_has_non_empty_primary_key(table_name):
-    # Baby idea: the primary_key is used in the MERGE ON condition.
+    # Test: the primary_key is used in the MERGE ON condition.
     # An empty string would cause a silent bug — the merge would fail or match nothing.
     config = TABLE_CONFIGS[table_name]
     assert isinstance(config.primary_key, str), f"{table_name}: primary_key must be a string"
@@ -56,7 +56,7 @@ def test_02_every_table_has_non_empty_primary_key(table_name):
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize("table_name", EXPECTED_TABLES)
 def test_03_every_table_has_non_empty_schema(table_name):
-    # Baby idea: an empty schema would mean no columns are cast — all data lands as null.
+    # Test: an empty schema would mean no columns are cast — all data lands as null.
     config = TABLE_CONFIGS[table_name]
     assert isinstance(config.schema, StructType), f"{table_name}: schema must be a StructType"
     assert len(config.schema.fields) > 0, f"{table_name}: schema must have at least one field"
@@ -67,7 +67,7 @@ def test_03_every_table_has_non_empty_schema(table_name):
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize("table_name", EXPECTED_TABLES)
 def test_04_primary_key_column_exists_in_schema(table_name):
-    # Baby idea: the MERGE condition is `target.{pk} = source.{pk}`.
+    # Test: the MERGE condition is `target.{pk} = source.{pk}`.
     # If pk is not a column in the schema, the merge fails with AnalysisException.
     config = TABLE_CONFIGS[table_name]
     column_names = [field.name for field in config.schema.fields]
@@ -80,7 +80,7 @@ def test_04_primary_key_column_exists_in_schema(table_name):
 # Test 5 — get_table_config() returns the correct config for a known table
 # ---------------------------------------------------------------------------
 def test_05_get_table_config_returns_correct_config_for_known_table():
-    # Baby idea: calling get_table_config("gametransaction") should give back
+    # Test: calling get_table_config("gametransaction") should give back
     # exactly the same object that is stored in TABLE_CONFIGS["gametransaction"].
     config = get_table_config("gametransaction")
     assert config is TABLE_CONFIGS["gametransaction"]
@@ -91,7 +91,7 @@ def test_05_get_table_config_returns_correct_config_for_known_table():
 # Test 6 — get_table_config() returns a safe fallback for an unknown table
 # ---------------------------------------------------------------------------
 def test_06_get_table_config_returns_fallback_for_unknown_table():
-    # Baby idea: during rollout of new tables we haven't fully defined yet,
+    # Test: during rollout of new tables we haven't fully defined yet,
     # the silver script must not crash — it gets a minimal working config instead.
     config = get_table_config("unknowntable")
     assert isinstance(config, TableConfig)
@@ -104,7 +104,7 @@ def test_06_get_table_config_returns_fallback_for_unknown_table():
 # Test 7 — the fallback primary_key follows the {table_name}Id convention
 # ---------------------------------------------------------------------------
 def test_07_fallback_primary_key_follows_naming_convention():
-    # Baby idea: fallback pk is "{table_name}Id" so the merge column can be
+    # Test: fallback pk is "{table_name}Id" so the merge column can be
     # inferred from the table name without any extra config.
     config = get_table_config("wallet")
     assert config.primary_key == "walletId"

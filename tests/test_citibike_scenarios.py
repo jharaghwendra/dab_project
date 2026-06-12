@@ -1,9 +1,9 @@
-"""Interview-ready PySpark unit tests for the Citi Bike project.
+"""PySpark unit tests for the Citi Bike project.
 
 These tests use tiny input datasets so expected outputs are easy to understand.
 
-How to read this file quickly (interview revision cheat mode):
-1) Read only comments that start with "Baby idea" -> this is the business rule.
+How to read this file quickly (revision cheat mode):
+1) Read only comments that start with "Test" -> this is the business rule.
 2) Read "Input looks like" -> this is the mini test dataset.
 3) Read "Expected output looks like" -> this is what you assert.
 4) Final assert line is the proof that rule works.
@@ -18,7 +18,7 @@ from src.utils.datetime_utils import timestamp_to_date_col
 
 
 def test_01_trip_duration_basic_minutes(spark):
-    # Baby idea: 10:00 -> 10:10 is 10 minutes, 10:00 -> 10:30 is 30 minutes.
+    # Test: 10:00 -> 10:10 is 10 minutes, 10:00 -> 10:30 is 30 minutes.
     # Input looks like: [(started_at, ended_at), ...]
     # Expected output looks like: [(trip_duration_mins,), ...] = [(10.0,), (30.0,)]
     data = [
@@ -35,7 +35,7 @@ def test_01_trip_duration_basic_minutes(spark):
 
 
 def test_02_trip_duration_zero_minutes(spark):
-    # Baby idea: same start and end time means 0 minutes.
+    # Test: same start and end time means 0 minutes.
     # Input looks like: [10:00 -> 10:00]
     # Expected output looks like: [0.0]
     data = [(datetime.datetime(2025, 4, 10, 10, 0, 0), datetime.datetime(2025, 4, 10, 10, 0, 0))]
@@ -48,7 +48,7 @@ def test_02_trip_duration_zero_minutes(spark):
 
 
 def test_03_trip_duration_negative_if_end_before_start(spark):
-    # Baby idea: bad data can happen; if end is before start, duration is negative.
+    # Test: bad data can happen; if end is before start, duration is negative.
     # Input looks like: [10:10 -> 10:00] (bad event order)
     # Expected output looks like: [-10.0]
     data = [(datetime.datetime(2025, 4, 10, 10, 10, 0), datetime.datetime(2025, 4, 10, 10, 0, 0))]
@@ -61,7 +61,7 @@ def test_03_trip_duration_negative_if_end_before_start(spark):
 
 
 def test_04_timestamp_to_date_extracts_calendar_day(spark):
-    # Baby idea: keep only the date part from timestamp.
+    # Test: keep only the date part from timestamp.
     # Input looks like: [2025-04-10 22:45:00 UTC, 2025-04-11 00:05:00 UTC]
     # Expected output looks like: [2025-04-10, 2025-04-11]
     # UTC-aware datetimes ensure Arrow serialises the exact UTC epoch regardless
@@ -80,7 +80,7 @@ def test_04_timestamp_to_date_extracts_calendar_day(spark):
 
 
 def test_05_silver_projection_matches_contract_columns(spark):
-    # Baby idea: silver table should contain only the expected clean columns.
+    # Test: silver table should contain only the expected clean columns.
     # Input looks like: one raw ride row with extra columns.
     # Expected output looks like: only silver contract columns in fixed order.
     raw = [
@@ -139,7 +139,7 @@ def test_05_silver_projection_matches_contract_columns(spark):
 
 
 def test_06_silver_metadata_contains_pipeline_fields(spark):
-    # Baby idea: every row carries run metadata like an ID card.
+    # Test: every row carries run metadata like an ID card.
     # Input looks like: one ride row + metadata map fields.
     # Expected output looks like: metadata has pipeline_id, run_id, task_id, processed_date.
     data = [
@@ -173,7 +173,7 @@ def test_06_silver_metadata_contains_pipeline_fields(spark):
 
 
 def test_07_gold_daily_summary_single_day(spark):
-    # Baby idea: one day with 3 trips -> max/min/avg/count should be easy math.
+    # Test: one day with 3 trips -> max/min/avg/count should be easy math.
     # Input looks like: trip_duration_mins = [10.0, 20.0, 30.0] for one date.
     # Expected output looks like: max=30.0, min=10.0, avg=20.0, total_trips=3.
     data = [
@@ -205,7 +205,7 @@ def test_07_gold_daily_summary_single_day(spark):
 
 
 def test_08_gold_daily_summary_multiple_days(spark):
-    # Baby idea: each date should be aggregated separately.
+    # Test: each date should be aggregated separately.
     # Input looks like: 2 rows for 2025-04-10 and 1 row for 2025-04-11.
     # Expected output looks like: two summary rows, one per date.
     data = [
@@ -240,7 +240,7 @@ def test_08_gold_daily_summary_multiple_days(spark):
 
 
 def test_09_gold_station_performance_by_day_and_station(spark):
-    # Baby idea: group by date + start station, then compute avg duration and trip count.
+    # Test: group by date + start station, then compute avg duration and trip count.
     # Input looks like: two rides from Station A, one from Station B (same day).
     # Expected output looks like: Station A -> avg 15.0 count 2, Station B -> avg 30.0 count 1.
     data = [
@@ -270,7 +270,7 @@ def test_09_gold_station_performance_by_day_and_station(spark):
 
 
 def test_10_gold_rounding_to_two_decimals(spark):
-    # Baby idea: dashboard values should be rounded to 2 decimal places.
+    # Test: dashboard values should be rounded to 2 decimal places.
     # Input looks like: [10.111, 10.129]
     # Expected output looks like: rounded average = 10.12
     data = [

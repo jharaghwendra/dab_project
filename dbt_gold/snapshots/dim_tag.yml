@@ -22,10 +22,10 @@ snapshots:
       Key change event tracked: active TRUE→FALSE (tag deactivated) or FALSE→TRUE (reactivated).
       tagCategory changes (e.g. player promoted from TEST to a different classification)
       are also captured because updatedAt advances on every tag mutation.
-      Lives in tma_dev.gold alongside all dimensions and facts.
+      Lives in igaming_dev.gold alongside all dimensions and facts.
 
     config:
-      schema: gold                             # → tma_dev.gold.dim_tag
+      schema: gold                             # → igaming_dev.gold.dim_tag
       unique_key: [tagId, country_code]        # composite PK — tagId is globally unique but
                                                # country_code added for multi-country shard consistency
       strategy: timestamp

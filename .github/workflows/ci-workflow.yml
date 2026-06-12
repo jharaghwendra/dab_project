@@ -63,7 +63,7 @@ jobs:
         working-directory: dbt_gold
         env:
           DATABRICKS_TOKEN: dummy-ci-token
-          DBT_CATALOG: tma_dev
+          DBT_CATALOG: igaming_dev
           DATABRICKS_HOST: dbc-71b2b101-72ab.cloud.databricks.com
           DBT_HTTP_PATH: /sql/1.0/warehouses/9299d8e6b7abab31
         run: dbt parse --profiles-dir .

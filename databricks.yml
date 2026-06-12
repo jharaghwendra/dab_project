@@ -22,7 +22,7 @@ variables:
     default: "0.0.7"
   catalog:
     description: The catalog to use
-    default: "tma_dev"
+    default: "igaming_dev"
   dev_flag:
     description: A flag to indicate if the environment is development
     default: true
@@ -51,7 +51,7 @@ targets:
       profile: DEFAULT
     variables:
       countries: ["de", "at", "dk"]
-      catalog: "tma_dev"
+      catalog: "igaming_dev"
       gaming_tables: [
         "account", "bonusaggregate", "brandgame", "campaign", "check",
         "communicationaggregate", "documentaggregate", "game", "gameround",
@@ -69,7 +69,7 @@ targets:
       profile: test
       root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
     variables:
-      catalog: "tma_dev"
+      catalog: "igaming_test"
       countries: ["de", "at", "dk"]
       dev_flag: false
     permissions:
@@ -84,7 +84,7 @@ targets:
       profile: prod
       root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
     variables:
-      catalog: "tma_prod"
+      catalog: "igaming_prod"
       countries: ["de", "at", "dk"]
       dev_flag: false
     permissions:
