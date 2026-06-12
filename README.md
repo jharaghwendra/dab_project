@@ -113,6 +113,8 @@ These jobs process each country separately in the Bronze and Silver layers:
 - `TMA Medallion Bronze and Silver DE`
 - `TMA Medallion Bronze and Silver DK`
 
+Each Bronze task lands raw country data from the source layer, and the matching Silver task applies the latest-record merge/upsert logic with deduplication and schema enforcement. That gives the job graph a clear Bronze → Silver task lineage for each country.
+
 ### Gold jobs
 
 These jobs read from the shared Silver layer, where the Silver tables hold the combined multi-country data using `country_id`:
@@ -122,6 +124,8 @@ These jobs read from the shared Silver layer, where the Silver tables hold the c
 - `TMA Gold Hourly Orchestrator`
 - `TMA Gold Marts PC`
 - `TMA Gold Snapshots Hourly`
+
+The Gold lineage is dbt-driven: snapshots such as `dim_player`, `dim_tag`, and `dim_userlimit` feed downstream marts, while facts and dimensions are built from the shared Silver layer. Example lineage is `silver.userdata -> snapshot dim_player -> mart_pc_account_signup` and `silver.gameround -> fact_gameround -> mart_gameround_hourly`.
 
 ### Gold Layer
 
