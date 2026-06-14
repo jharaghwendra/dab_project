@@ -58,9 +58,9 @@
 #   +---------+------------+---------------------+-------------+
 #   | userId  |country_code| source_updated_at   |dispatched_at|
 #   +---------+------------+---------------------+-------------+
-#   | 528917  | DE         | 2024-11-15 09:12:00 | null        | ← not yet POSTed
-#   | 99234   | DE         | 2024-11-28 07:45:00 | null        |
-#   | 71829   | AT         | 2024-08-05 11:00:00 | null        |
+#   | 222217  | DE         | 2024-11-15 09:12:00 | null        | ← not yet POSTed
+#   | 23444   | DE         | 2024-11-28 07:45:00 | null        |
+#   | 82927   | AT         | 2024-08-05 11:00:00 | null        |
 #   | ...     | ...        | ...                 | null        | (180k rows)
 #   +---------+------------+---------------------+-------------+
 #   max(source_updated_at) = '2024-12-03 08:45:00' (most recent player update)
@@ -73,8 +73,8 @@
 #   → updates dispatch_error on failure
 #
 #   Meanwhile in silver layer:
-#   → player 528917 updated their email at 2024-12-03 09:10:00 (updatedAt changes)
-#   → player 71829 got a new VIP tag at 2024-12-03 09:05:00 (dim_tag dbt_updated_at changes,
+#   → player 222217 updated their email at 2024-12-03 09:10:00 (updatedAt changes)
+#   → player 82927 got a new VIP tag at 2024-12-03 09:05:00 (dim_tag dbt_updated_at changes,
 #     but dim_player updatedAt does NOT change — tag change is invisible to profile watermark)
 #
 # ─────────────────────────────────────────────────────────────────────────────
@@ -86,12 +86,12 @@
 #
 #   Filter 1 — profile changes:
 #     dim_player WHERE updatedAt > '2024-12-03 08:45:00'
-#     → catches player 528917 (email changed at 09:10:00) ✓
-#     → misses player 71829  (only tags changed, updatedAt untouched) ✗
+#     → catches player 222217 (email changed at 09:10:00) ✓
+#     → misses player 82927  (only tags changed, updatedAt untouched) ✗
 #
 #   Filter 2 — tag-only changes:
 #     dim_tag WHERE dbt_updated_at > '2024-12-03 08:45:00'
-#     → catches player 71829 (new VIP tag at 09:05:00) ✓
+#     → catches player 82927 (new VIP tag at 09:05:00) ✓
 #     → joined back to dim_player to get full profile row
 #
 #   UNION both → 2 rows in dim_player delta
@@ -112,9 +112,9 @@
 #   +---------+------------+---------------------+-----------------------------+
 #   | userId  |country_code| source_updated_at   | dispatched_at               |
 #   +---------+------------+---------------------+-----------------------------+
-#   | 528917  | DE         | 2024-12-03 09:10:00 | null  ← RESET, re-dispatch  |
-#   | 99234   | DE         | 2024-11-28 07:45:00 | 2024-12-03 08:50:00 (sent)  | (untouched)
-#   | 71829   | AT         | 2024-08-05 11:00:00 | null  ← RESET, re-dispatch  |
+#   | 222217  | DE         | 2024-12-03 09:10:00 | null  ← RESET, re-dispatch  |
+#   | 23444   | DE         | 2024-11-28 07:45:00 | 2024-12-03 08:50:00 (sent)  | (untouched)
+#   | 82927   | AT         | 2024-08-05 11:00:00 | null  ← RESET, re-dispatch  |
 #   | ...     | ...        | ...                 | ...                         |
 #   +---------+------------+---------------------+-----------------------------+
 #
@@ -315,8 +315,8 @@ def model(dbt, session):
     # +-----------------------+--------+------------+----------+---------------------+
     # | userId                | city   | countryCode| birthDate| updatedAt           |
     # +-----------------------+--------+------------+----------+---------------------+
-    # | 528917                | Berlin | DE         |1985-03-22|2024-11-15 09:12:00  |
-    # | Kef6h5UmnRwIxZyJLhym  | Wien   | AT         |1991-07-04|2024-12-01 14:30:00  |
+    # | 222217                | Berlin | DE         |1985-03-22|2024-11-15 09:12:00  |
+    # | 5UmnRwIxZyJLAsasanu8  | Wien   | AT         |1991-07-04|2024-12-01 14:30:00  |
     # | 77341                 | Hamburg| DE         |1978-09-11|2024-12-03 08:45:00  |
     # +-----------------------+--------+------------+----------+---------------------+
     # ~180,000 rows — one active SCD2 row per player per country shard
@@ -333,12 +333,12 @@ def model(dbt, session):
     # +----------------------+------------+-------------+------+---------------------+
     # | targetId             |country_code| tagCategory |active| dbt_updated_at      |
     # +----------------------+------------+-------------+------+---------------------+
-    # | 528917               | DE         | TEST        | true |2024-11-20 10:00:00  |
-    # | 528917               | DE         | VIP         | true |2024-11-20 10:00:00  |
-    # | 99234                | DE         | HIGH_RISK   | true |2024-12-01 08:00:00  |
-    # | 71829                | AT         | VIP         | true |2024-11-30 15:22:00  |
+    # | 222217               | DE         | TEST        | true |2024-11-20 10:00:00  |
+    # | 222217               | DE         | VIP         | true |2024-11-20 10:00:00  |
+    # | 23444                | DE         | HIGH_RISK   | true |2024-12-01 08:00:00  |
+    # | 82927                | AT         | VIP         | true |2024-11-30 15:22:00  |
     # +----------------------+------------+-------------+------+---------------------+
-    # ~12,000 rows — note: user 528917 has 2 rows (TEST + VIP); one row per active tag
+    # ~12,000 rows — note: user 222217 has 2 rows (TEST + VIP); one row per active tag
 
     # -------------------------------------------------------------------------
     # Step 3: incremental filter — only players updated since last run
@@ -364,8 +364,8 @@ def model(dbt, session):
         # +----------------------+------------+
         # | userId               |country_code|
         # +----------------------+------------+
-        # | 528917               | DE         |
-        # | 71829                | AT         |
+        # | 222217               | DE         |
+        # | 82927                | AT         |
         # +----------------------+------------+
         # Small delta set — only players with tag activity after max(source_updated_at)
 
@@ -380,9 +380,9 @@ def model(dbt, session):
         # +----------------------+------------+---------------------+
         # | userId               |country_code| updatedAt           |
         # +----------------------+------------+---------------------+
-        # | 528917               | DE         |2024-11-15 09:12:00  |  <- profile changed
-        # | Kef6h5UmnRwIxZyJLhym | AT         |2024-12-01 14:30:00  |  <- profile changed
-        # | 71829                | AT         |2024-08-05 11:00:00  |  <- tag-only change
+        # | 222217               | DE         |2024-11-15 09:12:00  |  <- profile changed
+        # | 5UmnRwIxZyJLAsasanu8 | AT         |2024-12-01 14:30:00  |  <- profile changed
+        # | 82927                | AT         |2024-08-05 11:00:00  |  <- tag-only change
         # +----------------------+------------+---------------------+
         # Subset of full player table — only the delta for this incremental run
 
@@ -416,9 +416,9 @@ def model(dbt, session):
     # +--------+------------+--------------------------------------------------------------------------+----------+---------------------+
     # |targetId|country_code|tagCategories                                                             |isTestUser|tag_updated_at       |
     # +--------+------------+--------------------------------------------------------------------------+----------+---------------------+
-    # |528917  |DE          |[{"tagCategory":"TEST","active":true},{"tagCategory":"VIP","active":true}] |Y         |2024-11-20 10:00:00  |
-    # |99234   |DE          |[{"tagCategory":"HIGH_RISK","active":true}]                                |N         |2024-12-01 08:00:00  |
-    # |71829   |AT          |[{"tagCategory":"VIP","active":true}]                                     |N         |2024-11-30 15:22:00  |
+    # |222217  |DE          |[{"tagCategory":"TEST","active":true},{"tagCategory":"VIP","active":true}] |Y         |2024-11-20 10:00:00  |
+    # |23444   |DE          |[{"tagCategory":"HIGH_RISK","active":true}]                                |N         |2024-12-01 08:00:00  |
+    # |82927   |AT          |[{"tagCategory":"VIP","active":true}]                                     |N         |2024-11-30 15:22:00  |
     # +--------+------------+--------------------------------------------------------------------------+----------+---------------------+
     # ~8,000 rows | KEY FIX: "active":true (bool) — Talend GROUP_CONCAT produced "active":1 (int)
 
@@ -488,9 +488,9 @@ def model(dbt, session):
     # +----------------------+------------+----------+---------------------+---------------------+-------------+
     # |online_customer_id    |country_code|isTestUser|tagCategories        |source_updated_at    |dispatched_at|
     # +----------------------+------------+----------+---------------------+---------------------+-------------+
-    # |528917                |DE          |Y         |[{"tagCategory":...}]|2024-11-15 09:12:00  |null         |
-    # |Kef6h5UmnRwIxZyJLhym  |AT          |N         |null                 |2024-12-01 14:30:00  |null         |
-    # |99234                 |DE          |N         |[{"tagCategory":...}]|2024-11-28 07:45:00  |null         |
+    # |222217                |DE          |Y         |[{"tagCategory":...}]|2024-11-15 09:12:00  |null         |
+    # |5UmnRwIxZyJLAsasanu8  |AT          |N         |null                 |2024-12-01 14:30:00  |null         |
+    # |23444                 |DE          |N         |[{"tagCategory":...}]|2024-11-28 07:45:00  |null         |
     # +----------------------+------------+----------+---------------------+---------------------+-------------+
     # ~180,000 rows | tagCategories=null for players with no active tags (expected for LEFT JOIN)
     # Also carries: userId, countryCode, birthDate, city, email, firstName, gender, lastName,
@@ -543,15 +543,15 @@ def model(dbt, session):
     # +----------------------+------------+------------------------------------------------------------+---------------------+---------------------+----------+-------------+--------------+
     # |online_customer_id    |country_code|payload_json                                                |source_updated_at    |tag_updated_at       |isTestUser|dispatched_at|dispatch_error|
     # +----------------------+------------+------------------------------------------------------------+---------------------+---------------------+----------+-------------+--------------+
-    # |528917                |DE          |{"collection":"Account","onlineCustomerId":"528917",...      |2024-11-15 09:12:00  |2024-11-20 10:00:00  |Y         |null         |null          |
-    # |Kef6h5UmnRwIxZyJLhym  |AT          |{"collection":"Account","onlineCustomerId":"Kef6h5U...      |2024-12-01 14:30:00  |null                 |N         |null         |null          |
+    # |222217                |DE          |{"collection":"Account","onlineCustomerId":"222217",...      |2024-11-15 09:12:00  |2024-11-20 10:00:00  |Y         |null         |null          |
+    # |5UmnRwIxZyJLAsasanu8  |AT          |{"collection":"Account","onlineCustomerId":"Kef6h5U...      |2024-12-01 14:30:00  |null                 |N         |null         |null          |
     # +----------------------+------------+------------------------------------------------------------+---------------------+---------------------+----------+-------------+--------------+
     # ~180,000 rows | dispatched_at=null → picked up by WHERE dispatched_at IS NULL in dispatcher
     #
-    # payload_json for userId=528917 (pretty-printed):
+    # payload_json for userId=222217 (pretty-printed):
     # {
     #   "collection": "Account",
-    #   "onlineCustomerId": "528917",
+    #   "onlineCustomerId": "222217",
     #   "account": {
     #     "eventType": "signup",
     #     "birthdate": "1985-03-22",
