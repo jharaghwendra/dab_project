@@ -28,14 +28,14 @@ if not country:
 
 # 2. Authenticate against AWS S3 securely using Databricks Secret Scopes
 # NOTE: Commented out for POC on Databricks free trial (no S3 access)
-# aws_access_key = dbutils.secrets.get(scope="tma_gaming_scope", key="aws_access_key")
-# aws_secret_key = dbutils.secrets.get(scope="tma_gaming_scope", key="aws_secret_key")
+# aws_access_key = dbutils.secrets.get(scope="source_system_scope", key="aws_access_key")
+# aws_secret_key = dbutils.secrets.get(scope="source_system_scope", key="aws_secret_key")
 # spark.conf.set("fs.s3a.access.key", aws_access_key)
 # spark.conf.set("fs.s3a.secret.key", aws_secret_key)
 # spark.conf.set("spark.sql.sources.parallelPartitionDiscovery.threshold", "32")
 
 # 3. Formulate Ingestion Paths (Unity Catalog Volumes — POC on Databricks free trial)
-# Production: s3a://msw-mb-{country}/tma1-prd/parquet/{table}/
+# Production example: s3a://<source-bucket>/{country}/parquet/{table}/
 source_path = f"/Volumes/{catalog}/bronze/raw_landing/{country}/{table}/"
 checkpoint_path = f"/Volumes/{catalog}/bronze/raw_landing/_bronze_checkpoints/{country}/{table}/"
 schema_evolution_path = f"/Volumes/{catalog}/bronze/raw_landing/_schemas/{country}/{table}/"

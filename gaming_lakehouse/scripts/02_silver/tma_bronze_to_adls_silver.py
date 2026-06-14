@@ -34,7 +34,7 @@ if not country:
 # and register it in TABLE_CONFIGS. No changes needed here.
 _table_config = get_table_config(table_name)
 primary_key = _table_config.primary_key
-mysql_strict_schema = _table_config.schema
+strict_schema = _table_config.schema
 version_col = _table_config.version_col
 
 
@@ -49,14 +49,14 @@ total_rows_processed = [0]
 def process_micro_batch(micro_batch_df, batch_id, current_country):
     # Dynamic schema enforcement generation loop expressions
     # Cast existing columns; null-fill schema columns absent from the batch (e.g., always-null
-    # MySQL columns like availableBalancesAfter that parquet exporters omit when all-null).
-    # This preserves a 1:1 column match with the MySQL target schema.
+    # columns like availableBalancesAfter that parquet exporters omit when all-null).
+    # This preserves a 1:1 column match with the registered Silver schema contract.
     existing_columns = set(micro_batch_df.columns)
     cast_expressions = [
         col(field.name).cast(field.dataType).alias(field.name)
         if field.name in existing_columns
         else lit(None).cast(field.dataType).alias(field.name)
-        for field in mysql_strict_schema
+        for field in strict_schema
     ]
 
     # Isolate memory partitions to deduplicate the 10-minute micro-batch data footprint
@@ -101,7 +101,7 @@ def process_micro_batch(micro_batch_df, batch_id, current_country):
             clean_updates_df.alias("source"),
             f"target.{primary_key} = source.{primary_key} AND target.country_code = source.country_code",
         )
-        # Match condition replacement for your Talend: ON DUPLICATE KEY UPDATE (srct.updatedAt > u.updatedAt)
+        # Match condition equivalent to legacy SQL upsert pattern: update only when source version is newer
         .whenMatchedUpdate(condition=f"source.{version_col} > target.{version_col}", set=update_mapping)
         # Insertion tracking rules for completely brand new entities
         .whenNotMatchedInsert(values=update_mapping)

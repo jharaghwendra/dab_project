@@ -1,4 +1,4 @@
-# tma_gold_dims_job.yml
+# gold_dims_job.yml
 #
 # WHAT THIS JOB DOES:
 #   Runs all dbt SQL dimension models in the gold layer — DAILY only.
@@ -12,21 +12,21 @@
 #
 # SCD2 SNAPSHOTS ARE NOT HERE:
 #   Snapshots (dim_player, dim_tag, dim_userlimit) run hourly in a separate job:
-#   tma_gold_snapshots_job.yml — because player profiles change throughout the day.
+#   snapshots job — because player profiles change throughout the day.
 #
 # TRIGGERED BY:
-#   tma_gold_orchestrator_job — once per day after silver batch completes.
+#   daily orchestrator job — once per day after silver batch completes.
 #   Can also be triggered manually for a full dim refresh.
 #
 # DATABRICKS UI:
-#   Workflows → Jobs → "TMA Gold Dims Daily"
+#   Workflows → Jobs → "Gold Dims Daily"
 #   Task graph shows 4 boxes side-by-side (all parallel, no arrows between them):
 #   [dim_date_spine] [dim_date_time] [dim_game] [dim_payment_method]
 
 resources:
   jobs:
     tma_gold_dims_job:
-      name: "TMA Gold Dims Daily"
+      name: "Gold Dims Daily"
       max_concurrent_runs: 1
 
       # Serverless environment — dbt runs here, SQL queries go to the warehouse.

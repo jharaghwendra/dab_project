@@ -68,7 +68,7 @@ models:
       - name: timezone
         description: >
           Timezone identifier — either 'UTC' or 'Europe/Vienna'.
-          Filter WHERE timezone = 'Europe/Vienna' for CET/CEST reporting (default for TMA BI).
+          Filter WHERE timezone = 'Europe/Vienna' for CET/CEST reporting (default for BI dashboards).
           Filter WHERE timezone = 'UTC' for event-time technical queries.
         tests:
           - not_null

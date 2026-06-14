@@ -1,4 +1,4 @@
-# tma_gold_marts_pc_job.yml
+# gold_marts_pc_job.yml
 #
 # WHAT THIS JOB DOES:
 #   Two sequential tasks — Layer 1 (dbt mart) then Layer 2 (HTTP dispatcher).
@@ -10,7 +10,7 @@
 #
 #   Task 2: pc_dispatcher
 #     Python script (spark_python_task). Reads WHERE dispatched_at IS NULL.
-#     POSTs each row to PowerComply row-by-row (their API constraint).
+#     POSTs each row to the compliance API row-by-row (API constraint).
 #     Updates Delta immediately per row — crash-safe, no double-send on retry.
 #
 # WHY SEQUENTIAL (not parallel):
@@ -18,17 +18,17 @@
 #   so the mart has the latest staged payloads before the dispatcher reads them.
 #
 # TRIGGERED BY:
-#   tma_gold_orchestrator_job — via run_job_task after tma_gold_facts_job succeeds.
+#   hourly orchestrator flow — via run_job_task after facts job succeeds.
 #   Can also be triggered manually (e.g. retry failed dispatches).
 #
 # DATABRICKS UI:
-#   Workflows → Jobs → "TMA Gold Marts PC"
+#   Workflows → Jobs → "Gold Marts PC"
 #   Task graph: [dbt_mart_pc_account_signup] → [pc_dispatcher]  (arrow = depends_on)
 
 resources:
   jobs:
     tma_gold_marts_pc_job:
-      name: "TMA Gold Marts PC"
+      name: "Gold Marts PC"
       max_concurrent_runs: 1
 
       # Run every 10 minutes — uncomment when ready to activate in prod.
@@ -68,7 +68,7 @@ resources:
             warehouse_id: "${var.warehouse_id}"
 
         # ── Task 2: HTTP dispatcher — Layer 2 ─────────────────────────────────
-        # Reads WHERE dispatched_at IS NULL, POSTs to PowerComply, marks sent/failed.
+        # Reads WHERE dispatched_at IS NULL, POSTs to compliance API, marks sent/failed.
         # Uses dbutils.jobs.taskValues.set() — compatible with spark_python_task type.
         - task_key: "pc_dispatcher"
           depends_on:

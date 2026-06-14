@@ -1,6 +1,6 @@
 # =============================================================================
-# nb_pc_dispatcher.py — PowerComply Account Signup Dispatcher
-# Phase 3 of the PowerComply integration — Layer 2 (HTTP Dispatcher)
+# nb_pc_dispatcher.py — Compliance API Account Signup Dispatcher
+# Phase 3 of the compliance integration — Layer 2 (HTTP Dispatcher)
 #
 # ROLE IN 2-LAYER ARCHITECTURE:
 #   Layer 1 — dbt Python model (dbt_gold/models/marts/mart_pc_account_signup.py)
@@ -8,12 +8,12 @@
 #     dispatched_at = NULL on every new/updated row.
 #
 #   Layer 2 — THIS SCRIPT
-#     Reads WHERE dispatched_at IS NULL, POSTs to PowerComply, marks sent/failed.
+#     Reads WHERE dispatched_at IS NULL, POSTs to compliance API, marks sent/failed.
 #
-# REPLACES TALEND:
-#   Refresh_Token_If_Expired  →  get_pc_token() with TTLCache
-#   RestClient_To_Post_Data   →  post_to_powercomply() + retry logic
-#   Job control table update  →  DeltaTable.update() per row
+# IMPLEMENTATION MAPPING:
+#   Token refresh             →  get_api_token() with TTLCache
+#   REST dispatch             →  post_to_compliance_api() + retry logic
+#   Dispatch state updates    →  DeltaTable.update() per row
 #
 # DEAD-LETTER PATTERN:
 #   dispatched_at != NULL + dispatch_error = NULL  → sent successfully
@@ -36,13 +36,13 @@ from pyspark.sql.functions import col, current_timestamp, lit
 
 # =============================================================================
 # CONFIGURATION
-# All sensitive values stored in Databricks secret scope "powercomply".
+# All sensitive values stored in Databricks secret scope "compliance_api".
 # Set up once:
-#   databricks secrets create-scope --scope powercomply
-#   databricks secrets put-secret --scope powercomply --key token_url
-#   databricks secrets put-secret --scope powercomply --key api_base_url
-#   databricks secrets put-secret --scope powercomply --key client_id
-#   databricks secrets put-secret --scope powercomply --key client_secret
+#   databricks secrets create-scope --scope compliance_api
+#   databricks secrets put-secret --scope compliance_api --key token_url
+#   databricks secrets put-secret --scope compliance_api --key api_base_url
+#   databricks secrets put-secret --scope compliance_api --key client_id
+#   databricks secrets put-secret --scope compliance_api --key client_secret
 # =============================================================================
 
 CATALOG = "igaming_dev"
@@ -50,11 +50,11 @@ SCHEMA = "gold"
 TABLE = "mart_pc_account_signup"
 FULL_TABLE_NAME = f"{CATALOG}.{SCHEMA}.{TABLE}"
 
-# PowerComply API — all sensitive values from secret scope, never hardcoded
-PC_TOKEN_URL = dbutils.secrets.get(scope="powercomply", key="token_url")
-PC_API_BASE_URL = dbutils.secrets.get(scope="powercomply", key="api_base_url")
-PC_CLIENT_ID = dbutils.secrets.get(scope="powercomply", key="client_id")
-PC_CLIENT_SECRET = dbutils.secrets.get(scope="powercomply", key="client_secret")
+# Compliance API — all sensitive values from secret scope, never hardcoded
+API_TOKEN_URL = dbutils.secrets.get(scope="compliance_api", key="token_url")
+API_BASE_URL = dbutils.secrets.get(scope="compliance_api", key="api_base_url")
+API_CLIENT_ID = dbutils.secrets.get(scope="compliance_api", key="client_id")
+API_CLIENT_SECRET = dbutils.secrets.get(scope="compliance_api", key="client_secret")
 
 # Dispatcher tuning
 REQUEST_TIMEOUT_SECS = 30  # per-request HTTP timeout
@@ -64,7 +64,7 @@ RETRY_BACKOFF_SECS = 2  # base sleep: 2s → 4s → 8s (doubles each attempt)
 LOG_EVERY_N_ROWS = 100  # print progress summary every N rows
 
 # =============================================================================
-# TOKEN — TTLCache decorator (replaces Talend Refresh_Token_If_Expired)
+# TOKEN — TTLCache-based refresh implementation
 #
 # HOW TTLCache WORKS vs manual class:
 #
@@ -83,21 +83,21 @@ LOG_EVERY_N_ROWS = 100  # print progress summary every N rows
 #     - Here we only ever call with one set of credentials → maxsize=1 is correct.
 #
 #   On 401/403 mid-run (token rejected before TTL expires):
-#     - Call get_pc_token.cache.clear() to evict the cached token immediately.
-#     - Next call to get_pc_token() fetches a fresh token regardless of TTL.
+#     - Call get_api_token.cache.clear() to evict the cached token immediately.
+#     - Next call to get_api_token() fetches a fresh token regardless of TTL.
 # =============================================================================
 
 
 @cached(cache=TTLCache(maxsize=1, ttl=3540))
-def get_pc_token(token_url, client_id, client_secret):
+def get_api_token(token_url, client_id, client_secret):
     """
-    Fetch an OAuth2 bearer token for PowerComply.
+    Fetch an OAuth2 bearer token for the compliance API.
     Result cached for 3540s (59 min). Auto-refreshes on cache expiry.
 
     Cache hit  → returns cached token immediately (no HTTP call)
     Cache miss → POST /token, cache result, return access_token
     """
-    print(f"[Token] Fetching new PowerComply token at {_now_utc()}")
+    print(f"[Token] Fetching new compliance API token at {_now_utc()}")
     resp = requests.post(
         token_url,
         data={
@@ -122,10 +122,10 @@ def _now_utc():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 
-def post_to_powercomply(payload_json):
+def post_to_compliance_api(payload_json):
     """
-    POST one JSON payload to PowerComply Account endpoint.
-    Token fetched via get_pc_token() — TTLCache handles refresh automatically.
+    POST one JSON payload to the account endpoint.
+    Token fetched via get_api_token() — TTLCache handles refresh automatically.
 
     Retry logic:
       200         → success
@@ -136,10 +136,10 @@ def post_to_powercomply(payload_json):
 
     Returns: (success: bool, status_code: int, error_body: str | None)
     """
-    url = f"{PC_API_BASE_URL}/api/v1/events"
+    url = f"{API_BASE_URL}/api/v1/events"
 
     for attempt in range(1, MAX_RETRIES + 1):
-        token = get_pc_token(PC_TOKEN_URL, PC_CLIENT_ID, PC_CLIENT_SECRET)
+        token = get_api_token(API_TOKEN_URL, API_CLIENT_ID, API_CLIENT_SECRET)
         try:
             resp = requests.post(
                 url,
@@ -155,8 +155,8 @@ def post_to_powercomply(payload_json):
                 return True, 200, None
 
             elif resp.status_code in (401, 403):
-                # Token rejected — evict cache so next get_pc_token() refetches
-                get_pc_token.cache.clear()
+                # Token rejected — evict cache so next get_api_token() refetches
+                get_api_token.cache.clear()
                 if attempt < MAX_RETRIES:
                     continue
                 return False, resp.status_code, resp.text[:2000]
@@ -223,7 +223,7 @@ def mark_failed(delta_tbl, online_customer_id, country_code, error_body):
 #
 # Reads all rows where dispatched_at IS NULL, ordered oldest-first.
 # Collected to Pandas because iteration is row-by-row
-# (PowerComply does not accept batch POST).
+# (Compliance API does not accept batch POST).
 #
 # pending_df shape (typical 10-min incremental run):
 #   +----------------------+------------+-------------------------------------+
@@ -255,8 +255,8 @@ if total_pending == 0:
 # STEP 2: Dispatch loop
 #
 # For each pending row:
-#   1. get_pc_token() — TTLCache returns cached token or auto-fetches if expired
-#   2. POST payload_json to PowerComply (row-by-row — their API constraint)
+#   1. get_api_token() — TTLCache returns cached token or auto-fetches if expired
+#   2. POST payload_json to compliance API (row-by-row — API constraint)
 #   3. Immediate DeltaTable.update() per row
 #
 # WHY immediate update per row (not batch at end):
@@ -286,7 +286,7 @@ for idx, row in pending_df.iterrows():
             f"{rate:.1f} rows/s | ETA {eta_secs / 60:.1f}min"
         )
 
-    success, status_code, error_body = post_to_powercomply(payload)
+    success, status_code, error_body = post_to_compliance_api(payload)
 
     if success:
         mark_dispatched(delta_tbl, oci, cc)

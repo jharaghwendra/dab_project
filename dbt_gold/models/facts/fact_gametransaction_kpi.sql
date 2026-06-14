@@ -9,9 +9,9 @@
   ========================
   Grain   : one row per (sk_date_time × userId × gameId × currencyCode × country_code)
           = hourly, user-level aggregated KPIs from silver.gametransaction
-  Note    : brandId excluded from grain — always NULL in TMA source tables
+    Note    : brandId excluded from grain — always NULL in source tables
 
-  Equivalent to Talend's fact_tma_transaction_kpi_by_game_id DWH table.
+    Business-facing KPI fact table for hourly game transaction analytics.
   BI (QlikView) loads this and does COUNT(DISTINCT userId), SUM(bets_eur) etc. at query time.
   Joins to dim_date_time on sk_date_time to get CET hour/date for reporting.
 
@@ -20,7 +20,7 @@
     - 2-day lookback: re-aggregates D-2 and D-1 on every run
     - handles late-arriving transactions and rollback corrections safely
 
-  Business rules (mirroring Talend source SQL exactly):
+    Business rules implemented in this model:
     1. status = 'SUCCEEDED' only
     2. gameId NOT NULL / NOT blank
     3. TEST users excluded via LEFT ANTI JOIN on silver.tag (active TEST tags)
@@ -28,7 +28,7 @@
          bets = SUM(BET + RESERVED_BET) − SUM(ROLLBACK_BET + ROLLBACK_RESERVED_BET + ROLLBACK_ROUND)
          wins = SUM(WIN + PAYOUT + CASHOUT) − SUM(ROLLBACK_WIN + ROLLBACK_CASHOUT)
        Applied separately for: total (_eur), real money (_real_eur), bonus (_bonus_eur)
-    5. Promotional wins NOT rollback-adjusted (by design — matches Talend)
+    5. Promotional wins NOT rollback-adjusted (by design for current KPI contract)
     6. is_casino_player / is_sports_player flags from active CASINO_PLAYER / SPORTS_PLAYER tags
 */
 
@@ -83,7 +83,7 @@ player_verticals as (
 source as (
     select
         * except (gameId),
-        trim(gameId)  as gameId,      -- strip whitespace — matches Talend TRIM(gt.gameId)
+        trim(gameId)  as gameId,      -- strip whitespace before aggregation and joins
         cast(
             year(from_utc_timestamp(createdAt, 'Europe/Vienna'))    * 1000000
             + month(from_utc_timestamp(createdAt, 'Europe/Vienna')) * 10000
@@ -184,7 +184,7 @@ aggregated as (
         , 4)                                                            as wins_bonus_eur,
 
         -- ---------------------------------------------------------------
-        -- PROMOTIONAL WINS — NOT rollback-adjusted (by design, matches Talend)
+        -- PROMOTIONAL WINS — NOT rollback-adjusted (by design for KPI consistency)
         -- ---------------------------------------------------------------
         ROUND(
             SUM(CASE WHEN promotional = 1
@@ -232,7 +232,7 @@ final as (
         a.country_code,
 
         -- Game attributes (denormalized from dim_game — stable, avoids join in Qlik QVD)
-        -- NULL = game deleted from MySQL before data load (orphaned transactions) → labelled UNKNOWN
+        -- NULL = game unavailable in dimension at load time (orphaned transactions) → labelled UNKNOWN
         coalesce(dg.vertical, 'UNKNOWN')    as vertical,
         coalesce(dg.studio,   'UNKNOWN')    as studio,
         coalesce(dg.type,     'UNKNOWN')    as game_type,  -- SLOT / TABLE / LIVE_CASINO etc.

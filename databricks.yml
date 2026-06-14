@@ -30,7 +30,7 @@ variables:
     description: List of gaming tables for ingestion
     default: []
   countries:
-    description: List of countries for TMA ingestion
+    description: List of countries for source-system ingestion
     default: []
   warehouse_id:
     description: SQL warehouse used by dbt_task in gold layer jobs

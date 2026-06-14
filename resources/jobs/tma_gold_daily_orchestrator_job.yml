@@ -1,4 +1,4 @@
-# tma_gold_daily_orchestrator_job.yml
+# gold_daily_orchestrator_job.yml
 #
 # CADENCE: once per day at 06:00 CET (after overnight silver batch completes)
 #
@@ -6,11 +6,11 @@
 #   Chains: SQL dims rebuild → incremental facts + mart_gameround_hourly
 #
 #   ┌──────────────────────────────────────────────────────────────────┐
-#   │              TMA Gold Daily Orchestrator                         │
+#   │              Gold Daily Orchestrator                             │
 #   │                                                                  │
 #   │  [run_dims_daily_job]  ──────►  [run_facts_job]                  │
 #   │         ↓                              ↓                         │
-#   │  tma_gold_dims_job             tma_gold_facts_job                │
+#   │  dims job                      facts job                          │
 #   │  4 SQL dims (full rebuild)     4 facts + mart_gameround_hourly   │
 #   └──────────────────────────────────────────────────────────────────┘
 #
@@ -21,7 +21,7 @@
 resources:
   jobs:
     tma_gold_daily_orchestrator:
-      name: "TMA Gold Daily Orchestrator"
+      name: "Gold Daily Orchestrator"
       max_concurrent_runs: 1
 
       # schedule:

@@ -1,24 +1,23 @@
 # =============================================================================
 # mart_pc_account_signup — dbt Python model (Phase 2)
 # =============================================================================
-# Replaces Talend job: pc_account_signup_incremental_load
+# Stages account-signup payloads for downstream AML API dispatch.
 #
 # PURPOSE:
-#   Stages one row per player signup event, with the full PowerComply
+#   Stages one row per player signup event, with the full external compliance API
 #   JSON payload pre-built and ready for the dispatcher notebook to POST.
 #
-# TALEND JOB REPLACED:
-#   Fetch_Account_Signup_Data (MySQL SELECT with last_run_timestamp window)
-#   Build_JSON_Payload         (TJava: manual StringBuilder — fragile, no type safety)
-#   RestClient_To_Post_Data    (row-by-row POST to PowerComply endpoint)
+# PROCESS FLOW COVERED:
+#   Fetch account signup data with incremental windows
+#   Build JSON payload with strict typing
+#   Hand off rows to dispatcher for row-by-row POST to the compliance endpoint
 #
 # THIS MODEL handles concerns 1+2 (data + transformation) only.
 # The dispatcher notebook handles concern 3 (HTTP POST).
 #
-# KEY IMPROVEMENTS OVER TALEND:
+# KEY IMPLEMENTATION NOTES:
 #   1. tagCategories JSON: Python json.dumps() produces "active":true (boolean)
-#      Talend GROUP_CONCAT produced "active":1 (MySQL integer) — PowerComply
-#      REST API expects boolean. This was a silent data quality bug in Talend.
+#      REST API expects booleans, so payloads are serialized with correct JSON types.
 #   2. Incremental watermark: dbt is_incremental tracks max(updatedAt) seen,
 #      no separate job_control table needed.
 #   3. dbt tests validate payload shape before dispatcher runs.
@@ -120,7 +119,7 @@
 #
 # KEY DESIGN DECISIONS:
 #   1. dispatched_at reset on merge update is INTENTIONAL — ensures re-dispatch
-#      when player profile or tags change. PowerComply signup is idempotent.
+#      when player profile or tags change. Signup delivery is idempotent.
 #   2. Two watermarks (profile + tag) ensure no change slips through, even when
 #      dim_player.updatedAt is not touched by tag events.
 #   3. Dispatcher and dbt model are decoupled — they can run at different cadences.
@@ -132,11 +131,11 @@
 #   Lookback: players whose updatedAt > max(source_updated_at) in this table
 #   OR whose tag changed (tag_updated_at > max(source_updated_at))
 #   On re-run: dispatched_at is reset to NULL → dispatcher will re-send
-#   (safe: PowerComply signup is idempotent on onlineCustomerId)
+#   (safe: signup delivery is idempotent on onlineCustomerId)
 #
 # DISPATCHER CONTRACT (nb_pc_dispatcher.py reads this):
 #   SELECT * FROM mart_pc_account_signup WHERE dispatched_at IS NULL
-#   POST payload_json to PowerComply endpoint row by row
+#   POST payload_json to the compliance endpoint row by row
 #   On 200: UPDATE dispatched_at = current_timestamp()
 #   On error: UPDATE dispatch_error = response body
 # =============================================================================
@@ -149,7 +148,7 @@ from pyspark.sql.types import StringType
 
 
 # -----------------------------------------------------------------------------
-# Helper functions — replicate the Talend TJava Build_JSON_Payload logic
+# Helper functions — normalize input fields and build stable JSON payloads
 # These are defined at module level, outside model(), as pure Python functions.
 # No Jinja allowed in .py model files.
 # -----------------------------------------------------------------------------
@@ -157,7 +156,7 @@ from pyspark.sql.types import StringType
 
 def clean_str(val):
     """
-    Replicate Talend: replaceAll("[\\r\\n\\t\\u2028\\u2029]", "").trim()
+    Normalize line breaks and surrounding whitespace.
     Then treat empty string and literal "null" as None.
     Returns cleaned string or None.
     """
@@ -179,7 +178,7 @@ def clean_str(val):
 
 def parse_postcode(val):
     """
-    Replicate Talend: Integer.parseInt(trimmed) only if numeric digits.
+    Parse postcode from numeric characters only.
     Returns int or None.
     """
     if val is None:
@@ -195,7 +194,7 @@ def parse_postcode(val):
 
 def parse_mobile(val):
     """
-    Replicate Talend: Long.parseLong(digitsOnly) — digits only, no formatting.
+    Parse mobile number from numeric characters only.
     Returns int or None.
     """
     if val is None:
@@ -211,12 +210,10 @@ def parse_mobile(val):
 
 def build_payload(row):
     """
-    Build the full PowerComply JSON payload for one player signup event.
-    Replicates the Talend TJava Build_JSON_Payload step — cleanly and correctly.
+        Build the full compliance-event JSON payload for one player signup event.
 
-    KEY FIX vs Talend:
-      Talend GROUP_CONCAT:  "active":1   (MySQL TINYINT — wrong type)
-      Python json.dumps():  "active":true (Python bool — correct for REST API)
+        JSON typing is enforced through Python objects before serialization,
+        so booleans are emitted as true/false as expected by the API.
 
     The 'tags' field is the tagCategories JSON built from dim_tag aggregation.
     It arrives as a Python list of dicts (already parsed from JSON string),
@@ -265,18 +262,18 @@ def build_payload(row):
             "postcode": parse_postcode(row.postcode),
             "street": clean_str(row.address1),
             "birthPlace": clean_str(row.birthCity),
-            "birthCountry": None,  # not in TMA source — matches Talend NULL
+            "birthCountry": None,  # not available in current source dataset
             "birthName": clean_str(row.maidenName),
             "nationality": clean_str(row.nationality),
             "mobilenumber": parse_mobile(row.phone),
-            "jobposition": None,  # not in TMA source
-            "sourceFunds": None,  # not in TMA source
-            "countryIncome": None,  # not in TMA source
-            "expectedMonthlyTurnover": None,  # not in TMA source
-            "title": None,  # not in TMA source
-            "iban": None,  # not in TMA source
-            "autoPayout": None,  # not in TMA source
-            "autoPayoutLimit": None,  # not in TMA source
+            "jobposition": None,  # not available in current source system
+            "sourceFunds": None,  # not available in current source system
+            "countryIncome": None,  # not available in current source system
+            "expectedMonthlyTurnover": None,  # not available in current source system
+            "title": None,  # not available in current source system
+            "iban": None,  # not available in current source system
+            "autoPayout": None,  # not available in current source system
+            "autoPayoutLimit": None,  # not available in current source system
             "occupation": None,  # not present in dim_player
             # KEY: Python bool serialization — "active":true not "active":1
             "tags": tags_val,
@@ -342,7 +339,7 @@ def model(dbt, session):
 
     # -------------------------------------------------------------------------
     # Step 3: incremental filter — only players updated since last run
-    # Mirrors the Talend WHERE last_update > lastRunTimestamp logic.
+    # Mirrors the legacy incremental watermark pattern.
     # Also picks up players whose tags changed (tag_updated_at watermark).
     # -------------------------------------------------------------------------
     if dbt.is_incremental:
@@ -388,7 +385,7 @@ def model(dbt, session):
 
     # -------------------------------------------------------------------------
     # Step 4: aggregate tags per player → tagCategories JSON array
-    # Replicates the Talend subquery:
+    # Rebuild the legacy SQL-style tag aggregation with typed JSON:
     #   GROUP_CONCAT(DISTINCT CONCAT('{"tagCategory":"', t.tagCategory, '","active":', t.active, '}'))
     # But correctly: Python/Spark produces "active":true not "active":1
     #
@@ -420,7 +417,7 @@ def model(dbt, session):
     # |23444   |DE          |[{"tagCategory":"HIGH_RISK","active":true}]                                |N         |2024-12-01 08:00:00  |
     # |82927   |AT          |[{"tagCategory":"VIP","active":true}]                                     |N         |2024-11-30 15:22:00  |
     # +--------+------------+--------------------------------------------------------------------------+----------+---------------------+
-    # ~8,000 rows | KEY FIX: "active":true (bool) — Talend GROUP_CONCAT produced "active":1 (int)
+    # ~8,000 rows | JSON booleans are preserved as true/false in payloads
 
     # -------------------------------------------------------------------------
     # Step 5: join player profile + tag aggregation

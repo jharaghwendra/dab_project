@@ -1,10 +1,10 @@
-# tma_gold_snapshots_job.yml
+# gold_snapshots_job.yml
 #
 # WHAT THIS JOB DOES:
 #   Runs all three SCD2 snapshot models HOURLY.
 #   All 3 tasks run IN PARALLEL — no depends_on between them.
 #
-# WHY SEPARATE FROM tma_gold_dims_job (which runs daily):
+# WHY SEPARATE FROM the dimensions job (which runs daily):
 #   SQL dims (dim_game, dim_date_spine etc.) are materialized: table —
 #   full rebuild every run — wasteful to run hourly.
 #
@@ -15,7 +15,7 @@
 # WHY HOURLY:
 #   Player profiles (dim_player) change throughout the day:
 #     - KYC verification completed at 14:35 → needs to be in gold within the hour
-#     - Account locked at 09:12 → PowerComply mart must see updated state
+#     - Account locked at 09:12 → compliance mart must see updated state
 #   Running daily would mean mart_pc_account_signup sends stale payload_json
 #   until next morning — violating regulatory SLA.
 #
@@ -25,18 +25,18 @@
 #   dim_userlimit failure only affects responsible gambling reporting.
 #
 # TRIGGERED BY:
-#   tma_gold_hourly_orchestrator — runs in parallel with tma_gold_facts_job.
+#   hourly orchestrator — runs in parallel with facts job.
 #   Can also be triggered manually (e.g. after a silver backfill).
 #
 # DATABRICKS UI:
-#   Workflows → Jobs → "TMA Gold Snapshots Hourly"
+#   Workflows → Jobs → "Gold Snapshots Hourly"
 #   Task graph: [snapshot_dim_player] [snapshot_dim_tag] [snapshot_dim_userlimit]
 #               (3 boxes side-by-side, no arrows between them)
 
 resources:
   jobs:
     tma_gold_snapshots_job:
-      name: "TMA Gold Snapshots Hourly"
+      name: "Gold Snapshots Hourly"
       max_concurrent_runs: 1
 
       environments:

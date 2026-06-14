@@ -1,4 +1,4 @@
-# tma_gold_facts_job.yml
+# gold_facts_job.yml
 #
 # WHAT THIS JOB DOES:
 #   Runs all dbt fact models in the gold layer.
@@ -12,15 +12,15 @@
 #
 # PREREQUISITE:
 #   Dims must be complete before facts run. This is enforced by the orchestrator
-#   (tma_gold_orchestrator_job) — not hardcoded here. This job itself has no
+#   (daily orchestrator job) — not hardcoded here. This job itself has no
 #   knowledge of dims, keeping it independently runnable.
 #
 # TRIGGERED BY:
-#   tma_gold_orchestrator_job — via run_job_task after tma_gold_dims_job succeeds.
+#   daily orchestrator job — via run_job_task after dimensions job succeeds.
 #   Can also be triggered manually (e.g. reprocess facts after a hotfix).
 #
 # DATABRICKS UI:
-#   Workflows → Jobs → "TMA Gold Facts"
+#   Workflows → Jobs → "Gold Facts"
 #   4 facts run in parallel, mart_gameround_hourly runs after fact_gameround:
 #   [fact_payments] [fact_game_revenue] [fact_gameround] [fact_gametransaction_kpi]
 #                                             ↓
@@ -29,7 +29,7 @@
 resources:
   jobs:
     tma_gold_facts_job:
-      name: "TMA Gold Facts"
+      name: "Gold Facts"
       max_concurrent_runs: 1
 
       # Serverless environment — dbt runs here, SQL queries go to the warehouse.

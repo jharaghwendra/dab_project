@@ -1,4 +1,4 @@
-# tma_gold_hourly_orchestrator_job.yml
+# gold_hourly_orchestrator_job.yml
 #
 # CADENCE: every hour at :15 (e.g. 07:15, 08:15, 09:15 ...)
 #
@@ -6,11 +6,11 @@
 #   Chains: SCD2 snapshots refresh → incremental facts + mart_gameround_hourly
 #
 #   ┌──────────────────────────────────────────────────────────────────┐
-#   │              TMA Gold Hourly Orchestrator                        │
+#   │              Gold Hourly Orchestrator                            │
 #   │                                                                  │
 #   │  [run_snapshots_job]  ──────►  [run_facts_job]                   │
 #   │         ↓                              ↓                         │
-#   │  tma_gold_snapshots_job        tma_gold_facts_job                │
+#   │  snapshots job                 facts job                          │
 #   │  3 SCD2 snapshots              4 facts + mart_gameround_hourly   │
 #   └──────────────────────────────────────────────────────────────────┘
 #
@@ -20,13 +20,13 @@
 #   Facts themselves don't join snapshots — but sequencing here ensures
 #   the full pipeline state is consistent within each hourly cycle.
 #
-# tma_gold_marts_pc_job runs on its own independent 10-min schedule.
+# The marts+dispatcher job runs on its own independent 10-min schedule.
 # It is NOT part of this orchestrator — different cadence, different trigger.
 
 resources:
   jobs:
     tma_gold_hourly_orchestrator:
-      name: "TMA Gold Hourly Orchestrator"
+      name: "Gold Hourly Orchestrator"
       max_concurrent_runs: 1
 
       # schedule:

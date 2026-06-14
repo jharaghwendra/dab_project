@@ -9,9 +9,9 @@ snapshots:
       Each row is one version of a tag — dbt_valid_from/dbt_valid_to define the active period.
       Current state (SCD1 equivalent): WHERE dbt_valid_to = cast('9999-12-31' as timestamp)
 
-      Primary AML compliance use case (PowerComply integration):
-      The Talend incremental feed derives isTestUser and tagCategories JSON from this table
-      and pushes them to the PowerComply AML REST endpoint every 10 minutes.
+      Primary AML compliance use case (compliance API integration):
+      The incremental AML feed derives isTestUser and tagCategories JSON from this table
+      and pushes them to the AML REST endpoint every 10 minutes.
       With SCD2, point-in-time queries can answer "Was player X a TEST user at transaction time T?"
         → WHERE targetId = X AND tagCategory = 'TEST' AND active = true
               AND dbt_valid_from <= T AND dbt_valid_to > T
@@ -30,7 +30,7 @@ snapshots:
                                                # country_code added for multi-country shard consistency
       strategy: timestamp
       updated_at: updatedAt                    # dbt compares this on every run
-      # NOTE: last_update (MySQL column used by Talend incremental) is NOT in the S3 parquet export.
+      # NOTE: last_update (legacy incremental column) is NOT in the S3 parquet export.
       #       updatedAt is the correct SCD2 trigger column — same pattern as dim_userlimit/dim_player.
       dbt_valid_to_current: "cast('9999-12-31' as timestamp)"
       # ^^^ NEW in dbt 1.9+: open records get '9999-12-31' instead of NULL
@@ -90,7 +90,7 @@ snapshots:
         description: >
           Tag classification — determines the business meaning of the tag.
           Known values: 'TEST' (exclude from AML/reporting), 'VIP', 'FRAUD', others.
-          TEST: player is a test account — Talend derives isTestUser='Y' when any TEST tag is active.
+          TEST: player is a test account — AML logic derives isTestUser='Y' when any TEST tag is active.
           Changes to this field advance updatedAt and are captured as a new SCD2 version.
 
       - name: active

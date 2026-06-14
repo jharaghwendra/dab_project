@@ -5,7 +5,7 @@ Central registry of Delta/Silver table configurations.
 
 Each entry maps a table_name string to a TableConfig with:
   - primary_key : the unique business key used in MERGE ON condition
-  - schema      : PySpark StructType mirroring the MySQL target schema
+    - schema      : PySpark StructType defining the canonical Silver schema contract
 
 Adding a new table:
   1. Define a StructType for the new table below.
@@ -146,11 +146,7 @@ _GAMETRANSACTION_SCHEMA = StructType(
 # ---------------------------------------------------------------------------
 # userdata
 # ---------------------------------------------------------------------------
-# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
-#   idx_createdat       (createdAt)
-#   idx_firstDepositAt  (firstDepositAt)
-#   idx_last_update     (last_update)
-#   idx_updatedat       (updatedAt)
+# Suggested optimization columns: createdAt, firstDepositAt, last_update, updatedAt
 _USERDATA_SCHEMA = StructType(
     [
         StructField("createdAt", TimestampType(), True),
@@ -357,15 +353,8 @@ _USERDATA_SCHEMA = StructType(
 # ---------------------------------------------------------------------------
 # payment
 # ---------------------------------------------------------------------------
-# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
-#   idx_completedat_type            (completedAt, type)
-#   idx_createdat                   (createdAt)
-#   idx_last_update                 (last_update)
-#   idx_shopref_type_succeededat    (shopRef(10), type, succeededAt)
-#   idx_succeededat_type_provider   (succeededAt, type, provider)
-#   idx_terminalRef_type_succeededat(terminalRef(10), type, succeededAt)
-#   idx_updatedat                   (updatedAt)
-#   idx_userid                      (userId(20))
+# Suggested optimization columns: completedAt, type, createdAt, last_update,
+# shopRef, succeededAt, terminalRef, updatedAt, userId, provider
 _PAYMENT_SCHEMA = StructType(
     [
         StructField("createdAt", TimestampType(), True),
@@ -456,12 +445,8 @@ _PAYMENT_SCHEMA = StructType(
 # ---------------------------------------------------------------------------
 # check
 # ---------------------------------------------------------------------------
-# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
-#   idx_createdat              (createdAt)
-#   idx_last_update            (last_update)
-#   idx_shopRef_createdat      (shopRef(6), createdAt)
-#   idx_updatedat              (updatedAt)
-# Talend upsert key: updatedAt — max(updatedAt) per checkId, srct.updatedAt > ch.updatedAt
+# Suggested optimization columns: createdAt, last_update, shopRef, updatedAt
+# Upsert key: updatedAt — max(updatedAt) per checkId, source.updatedAt > target.updatedAt
 _CHECK_SCHEMA = StructType(
     [
         StructField("action", StringType(), True),
@@ -489,12 +474,8 @@ _CHECK_SCHEMA = StructType(
 # ---------------------------------------------------------------------------
 # gameround
 # ---------------------------------------------------------------------------
-# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
-#   idx_createdat    (createdAt)
-#   idx_last_update  (last_update)
-#   idx_updatedat    (updatedAt)
-#   idx_version      (version)
-# Talend upsert key: version — MAX(version) per gameRoundId, srct.version > gr.version
+# Suggested optimization columns: createdAt, last_update, updatedAt, version
+# Upsert key: version — MAX(version) per gameRoundId, source.version > target.version
 _GAMEROUND_SCHEMA = StructType(
     [
         StructField("createdAt", TimestampType(), True),
@@ -530,8 +511,8 @@ _GAMEROUND_SCHEMA = StructType(
         StructField("winAmount", DecimalType(34, 4), True),
         StructField("winBet", DecimalType(34, 4), True),
         StructField("winCount", IntegerType(), True),
-        StructField("jackpotAmount", StringType(), True),  # stored as text in MySQL
-        StructField("jackpotContribution", StringType(), True),  # stored as text in MySQL
+        StructField("jackpotAmount", StringType(), True),  # stored as text in source export
+        StructField("jackpotContribution", StringType(), True),  # stored as text in source export
         StructField("shopRef", StringType(), True),
         StructField("terminalRef", StringType(), True),
         StructField("discardable", ByteType(), True),
@@ -562,8 +543,8 @@ _GAMEROUND_SCHEMA = StructType(
 # ---------------------------------------------------------------------------
 # game
 # ---------------------------------------------------------------------------
-# MySQL indexes: idx_createdat (createdAt), idx_updatedat (updatedAt), idx_last_update (last_update)
-# Upsert key: version (text in MySQL but treated as dedup signal — updatedAt used instead)
+# Suggested optimization columns: createdAt, updatedAt, last_update
+# Upsert key: version is text, so updatedAt is used for dedup ordering
 _GAME_SCHEMA = StructType(
     [
         StructField("createdAt", TimestampType(), True),
@@ -602,7 +583,7 @@ _GAME_SCHEMA = StructType(
         StructField("tags", StringType(), True),  # JSON stored as string
         StructField("tcUpdatedAt", TimestampType(), True),
         StructField("type", StringType(), True),
-        StructField("version", StringType(), True),  # text in MySQL — not an int version
+        StructField("version", StringType(), True),  # text field — not an int version
         StructField("vertical", StringType(), True),
         StructField("volatility", StringType(), True),
         StructField("wageringCoefficient", StringType(), True),
@@ -623,7 +604,7 @@ _GAME_SCHEMA = StructType(
 # Brand-specific configuration layer on top of game.
 # One brandgame row per (brand, game) combination.
 # brandgame.gameId (text FK) → game.gameId
-# MySQL indexes: idx_createdat (createdAt), idx_updatedat (updatedAt), idx_last_update (last_update)
+# Suggested optimization columns: createdAt, updatedAt, last_update
 _BRANDGAME_SCHEMA = StructType(
     [
         StructField("createdAt", TimestampType(), True),
@@ -662,7 +643,7 @@ _BRANDGAME_SCHEMA = StructType(
         StructField("tags", StringType(), True),  # JSON stored as string
         StructField("tcUpdatedAt", TimestampType(), True),
         StructField("type", StringType(), True),
-        StructField("version", StringType(), True),  # text in MySQL — not an int version
+        StructField("version", StringType(), True),  # text field — not an int version
         StructField("vertical", StringType(), True),
         StructField("volatility", StringType(), True),
         StructField("wageringCoefficient", StringType(), True),
@@ -690,10 +671,7 @@ _BRANDGAME_SCHEMA = StructType(
 # ---------------------------------------------------------------------------
 # tag
 # ---------------------------------------------------------------------------
-# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
-#   idx_createdat    (createdAt)
-#   idx_updatedat    (updatedAt)
-#   idx_targetId     (targetId(34))
+# Suggested optimization columns: createdAt, updatedAt, targetId
 # PK: tagId (varchar 255)
 # version_col: version — used for dedup ordering in merge
 # Key use: test-user exclusion filter — rows where targetType='User' AND tagCategory='TEST'
@@ -719,13 +697,8 @@ _TAG_SCHEMA = StructType(
 # ---------------------------------------------------------------------------
 # userlimit
 # ---------------------------------------------------------------------------
-# MySQL indexes (reference for Delta Z-ORDER / bloom filter optimisation):
-#   idx_last_update   (last_update)
-#   idx_createdat     (createdAt)
-#   idx_updatedat     (updatedAt)
-#   idx_userid        (userId(20))
-#   idx_version       (version)
-# Talend upsert key: version — version-based merge (same pattern as gametransaction)
+# Suggested optimization columns: last_update, createdAt, updatedAt, userId, version
+# Upsert key: version — version-based merge (same pattern as gametransaction)
 # SCD2 target: dbt snapshot snap_userlimit uses updatedAt as strategy=timestamp
 _USERLIMIT_SCHEMA = StructType(
     [
@@ -790,7 +763,7 @@ TABLE_CONFIGS: dict[str, TableConfig] = {
     "game": TableConfig(
         primary_key="gameId",
         schema=_GAME_SCHEMA,
-        version_col="updatedAt",  # version col in MySQL is text (not int) — use updatedAt for dedup ordering
+        version_col="updatedAt",  # version column is text (not int) — use updatedAt for dedup ordering
     ),
     "brandgame": TableConfig(
         primary_key="brandGameId",

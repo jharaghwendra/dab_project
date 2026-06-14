@@ -2,7 +2,7 @@
   dim_payment_method
   ==================
   Derived dimension — distinct (method, provider, gateway, type) combinations
-  observed in silver.payment. No separate lookup table exists in MySQL;
+    observed in silver.payment. No separate lookup table exists upstream;
   the dimension is derived directly from the fact source.
 
   Grain   : one row per (method, provider, gateway, type) combination

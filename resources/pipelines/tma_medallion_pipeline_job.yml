@@ -1,7 +1,7 @@
 resources:
   jobs:
     tma_medallion_bronze_silver_de:
-      name: "TMA Medallion Bronze and Silver DE"
+      name: "Medallion Bronze and Silver DE"
       max_concurrent_runs: 1
       # schedule:
       #   quartz_cron_expression: "0 */10 * * * ?"
@@ -274,7 +274,7 @@ resources:
             source: WORKSPACE
 
     tma_medallion_bronze_silver_at:
-      name: "TMA Medallion Bronze and Silver AT"
+      name: "Medallion Bronze and Silver AT"
       max_concurrent_runs: 1
       # schedule:
       #   quartz_cron_expression: "0 */10 * * * ?"
@@ -547,7 +547,7 @@ resources:
             source: WORKSPACE
 
     tma_medallion_bronze_silver_dk:
-      name: "TMA Medallion Bronze and Silver DK"
+      name: "Medallion Bronze and Silver DK"
       max_concurrent_runs: 1
       # schedule:
       #   quartz_cron_expression: "0 */10 * * * ?"

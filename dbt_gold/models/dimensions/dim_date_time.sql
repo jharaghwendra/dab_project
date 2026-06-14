@@ -53,7 +53,7 @@ final as (
 )
 
 select
-    -- sk_date_time: YYYYMMDDHH in local time — matches MySQL source format
+    -- sk_date_time: YYYYMMDDHH in local time — stable shared key format across Gold models
     cast(
         year(ts_local)    * 1000000
         + month(ts_local) * 10000
