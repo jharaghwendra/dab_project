@@ -35,7 +35,7 @@
 
 resources:
   jobs:
-    tma_gold_snapshots_job:
+    igaming_gold_snapshots_job:
       name: "Gold Snapshots Hourly"
       max_concurrent_runs: 1
 

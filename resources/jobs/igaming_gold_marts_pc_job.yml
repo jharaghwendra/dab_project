@@ -27,7 +27,7 @@
 
 resources:
   jobs:
-    tma_gold_marts_pc_job:
+    igaming_gold_marts_pc_job:
       name: "Gold Marts PC"
       max_concurrent_runs: 1
 

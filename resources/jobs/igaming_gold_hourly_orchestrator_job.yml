@@ -25,7 +25,7 @@
 
 resources:
   jobs:
-    tma_gold_hourly_orchestrator:
+    igaming_gold_hourly_orchestrator:
       name: "Gold Hourly Orchestrator"
       max_concurrent_runs: 1
 
@@ -39,7 +39,7 @@ resources:
         # dbt snapshot is idempotent — if nothing changed, exits in ~10s
         - task_key: "run_snapshots_job"
           run_job_task:
-            job_id: ${resources.jobs.tma_gold_snapshots_job.id}
+            job_id: ${resources.jobs.igaming_gold_snapshots_job.id}
 
         # Step 2: run incremental facts (+ mart_gameround_hourly)
         # Only starts after all snapshots complete successfully
@@ -47,4 +47,4 @@ resources:
           depends_on:
             - task_key: "run_snapshots_job"
           run_job_task:
-            job_id: ${resources.jobs.tma_gold_facts_job.id}
+            job_id: ${resources.jobs.igaming_gold_facts_job.id}

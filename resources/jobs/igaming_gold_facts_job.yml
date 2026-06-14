@@ -28,7 +28,7 @@
 
 resources:
   jobs:
-    tma_gold_facts_job:
+    igaming_gold_facts_job:
       name: "Gold Facts"
       max_concurrent_runs: 1
 

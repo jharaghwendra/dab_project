@@ -1,6 +1,6 @@
 resources:
   jobs:
-    tma_medallion_bronze_silver_de:
+    igaming_medallion_bronze_silver_de:
       name: "Medallion Bronze and Silver DE"
       max_concurrent_runs: 1
       # schedule:
@@ -25,7 +25,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -39,7 +39,7 @@ resources:
             - task_key: "bronze_gametransaction_de"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -53,7 +53,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -67,7 +67,7 @@ resources:
             - task_key: "bronze_userdata_de"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -81,7 +81,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -95,7 +95,7 @@ resources:
             - task_key: "bronze_payment_de"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -109,7 +109,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -123,7 +123,7 @@ resources:
             - task_key: "bronze_check_de"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -137,7 +137,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -151,7 +151,7 @@ resources:
             - task_key: "bronze_gameround_de"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -165,7 +165,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -179,7 +179,7 @@ resources:
             - task_key: "bronze_game_de"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -193,7 +193,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -207,7 +207,7 @@ resources:
             - task_key: "bronze_brandgame_de"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -221,7 +221,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -235,7 +235,7 @@ resources:
             - task_key: "bronze_tag_de"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -249,7 +249,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -263,7 +263,7 @@ resources:
             - task_key: "bronze_userlimit_de"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -273,7 +273,7 @@ resources:
               - "userlimit"
             source: WORKSPACE
 
-    tma_medallion_bronze_silver_at:
+    igaming_medallion_bronze_silver_at:
       name: "Medallion Bronze and Silver AT"
       max_concurrent_runs: 1
       # schedule:
@@ -298,7 +298,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -312,7 +312,7 @@ resources:
             - task_key: "bronze_gametransaction_at"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -326,7 +326,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -340,7 +340,7 @@ resources:
             - task_key: "bronze_userdata_at"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -354,7 +354,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -368,7 +368,7 @@ resources:
             - task_key: "bronze_payment_at"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -382,7 +382,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -396,7 +396,7 @@ resources:
             - task_key: "bronze_check_at"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -410,7 +410,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -424,7 +424,7 @@ resources:
             - task_key: "bronze_gameround_at"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -438,7 +438,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -452,7 +452,7 @@ resources:
             - task_key: "bronze_game_at"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -466,7 +466,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -480,7 +480,7 @@ resources:
             - task_key: "bronze_brandgame_at"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -494,7 +494,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -508,7 +508,7 @@ resources:
             - task_key: "bronze_tag_at"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -522,7 +522,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -536,7 +536,7 @@ resources:
             - task_key: "bronze_userlimit_at"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -546,7 +546,7 @@ resources:
               - "userlimit"
             source: WORKSPACE
 
-    tma_medallion_bronze_silver_dk:
+    igaming_medallion_bronze_silver_dk:
       name: "Medallion Bronze and Silver DK"
       max_concurrent_runs: 1
       # schedule:
@@ -571,7 +571,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -585,7 +585,7 @@ resources:
             - task_key: "bronze_gametransaction_dk"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -599,7 +599,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -613,7 +613,7 @@ resources:
             - task_key: "bronze_userdata_dk"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -627,7 +627,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -641,7 +641,7 @@ resources:
             - task_key: "bronze_payment_dk"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -655,7 +655,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -669,7 +669,7 @@ resources:
             - task_key: "bronze_check_dk"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -683,7 +683,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -697,7 +697,7 @@ resources:
             - task_key: "bronze_gameround_dk"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -711,7 +711,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -725,7 +725,7 @@ resources:
             - task_key: "bronze_game_dk"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -739,7 +739,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -753,7 +753,7 @@ resources:
             - task_key: "bronze_brandgame_dk"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -767,7 +767,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -781,7 +781,7 @@ resources:
             - task_key: "bronze_tag_dk"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -795,7 +795,7 @@ resources:
             - task_key: "00_wheel_task"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/01_bronze/tma_s3_to_adls_bronze.py"
+            python_file: "../../gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"
@@ -809,7 +809,7 @@ resources:
             - task_key: "bronze_userlimit_dk"
           environment_key: default
           spark_python_task:
-            python_file: "../../gaming_lakehouse/scripts/02_silver/tma_bronze_to_adls_silver.py"
+            python_file: "../../gaming_lakehouse/scripts/02_silver/igaming_bronze_to_adls_silver.py"
             parameters:
               - "--catalog"
               - "${var.catalog}"

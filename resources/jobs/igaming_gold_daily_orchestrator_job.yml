@@ -20,7 +20,7 @@
 
 resources:
   jobs:
-    tma_gold_daily_orchestrator:
+    igaming_gold_daily_orchestrator:
       name: "Gold Daily Orchestrator"
       max_concurrent_runs: 1
 
@@ -33,7 +33,7 @@ resources:
         # Step 1: rebuild all 4 SQL dims in parallel
         - task_key: "run_dims_daily_job"
           run_job_task:
-            job_id: ${resources.jobs.tma_gold_dims_job.id}
+            job_id: ${resources.jobs.igaming_gold_dims_job.id}
 
         # Step 2: run incremental facts (+ mart_gameround_hourly)
         # Only starts after all dims complete successfully
@@ -41,4 +41,4 @@ resources:
           depends_on:
             - task_key: "run_dims_daily_job"
           run_job_task:
-            job_id: ${resources.jobs.tma_gold_facts_job.id}
+            job_id: ${resources.jobs.igaming_gold_facts_job.id}

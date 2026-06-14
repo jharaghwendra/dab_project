@@ -25,7 +25,7 @@
 
 resources:
   jobs:
-    tma_gold_dims_job:
+    igaming_gold_dims_job:
       name: "Gold Dims Daily"
       max_concurrent_runs: 1
 
