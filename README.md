@@ -1,4 +1,4 @@
-# Databricks Lakehouse Portfolio
+# Databricks Lakehouse Projects with DAB (Databricks Asset Bundle) and dbt
 
 This repository presents three Databricks projects that I use to demonstrate end-to-end Lakehouse work:
 
