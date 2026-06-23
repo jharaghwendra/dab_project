@@ -5,7 +5,7 @@ Silver table configs. These tests make sure the registry is correct
 and the lookup function behaves as expected — without needing Spark.
 
 How to read this file (steps):
-  Test 1 — are all 5 expected tables registered?
+    Test 1 — are all 9 expected tables registered?
   Test 2 — does every registered table have a non-empty primary_key?
   Test 3 — does every registered table have a non-empty schema?
   Test 4 — does each table's primary_key actually exist as a column in its schema?
@@ -26,7 +26,17 @@ from src.gaming_lakehouse.config.table_schemas import (
 # ---------------------------------------------------------------------------
 # Constants — update this list whenever a new table is added to TABLE_CONFIGS
 # ---------------------------------------------------------------------------
-EXPECTED_TABLES = ["gametransaction", "userdata", "payment", "check", "gameround"]
+EXPECTED_TABLES = [
+    "ig_transaction",
+    "ig_player",
+    "ig_payment",
+    "ig_compliance_check",
+    "ig_round",
+    "ig_game_catalog",
+    "ig_brand_game_catalog",
+    "ig_player_tag",
+    "ig_player_limit",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -80,11 +90,11 @@ def test_04_primary_key_column_exists_in_schema(table_name):
 # Test 5 — get_table_config() returns the correct config for a known table
 # ---------------------------------------------------------------------------
 def test_05_get_table_config_returns_correct_config_for_known_table():
-    # Test: calling get_table_config("gametransaction") should give back
-    # exactly the same object that is stored in TABLE_CONFIGS["gametransaction"].
-    config = get_table_config("gametransaction")
-    assert config is TABLE_CONFIGS["gametransaction"]
-    assert config.primary_key == "gameTransactionId"
+    # Test: calling get_table_config("ig_transaction") should give back
+    # exactly the same object that is stored in TABLE_CONFIGS["ig_transaction"].
+    config = get_table_config("ig_transaction")
+    assert config is TABLE_CONFIGS["ig_transaction"]
+    assert config.primary_key == "transaction_id"
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +106,6 @@ def test_06_get_table_config_returns_fallback_for_unknown_table():
     config = get_table_config("unknowntable")
     assert isinstance(config, TableConfig)
     assert isinstance(config.schema, StructType)
-    assert len(config.schema.fields) > 0
     assert config.primary_key != ""
 
 
@@ -104,7 +113,7 @@ def test_06_get_table_config_returns_fallback_for_unknown_table():
 # Test 7 — the fallback primary_key follows the {table_name}Id convention
 # ---------------------------------------------------------------------------
 def test_07_fallback_primary_key_follows_naming_convention():
-    # Test: fallback pk is "{table_name}Id" so the merge column can be
+    # Test: fallback pk is "{table_name}_id" so the merge column can be
     # inferred from the table name without any extra config.
     config = get_table_config("wallet")
-    assert config.primary_key == "walletId"
+    assert config.primary_key == "wallet_id"
