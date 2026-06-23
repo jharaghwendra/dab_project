@@ -1,0 +1,44 @@
+# gold_daily_orchestrator_job.yml
+#
+# CADENCE: once per day at 06:00 CET (after overnight silver batch completes)
+#
+# WHAT IT DOES:
+#   Chains: SQL dims rebuild → incremental facts + mart_gameround_hourly
+#
+#   ┌──────────────────────────────────────────────────────────────────┐
+#   │              Gold Daily Orchestrator                             │
+#   │                                                                  │
+#   │  [run_dims_daily_job]  ──────►  [run_facts_job]                  │
+#   │         ↓                              ↓                         │
+#   │  dims job                      facts job                          │
+#   │  4 SQL dims (full rebuild)     4 facts + mart_gameround_hourly   │
+#   └──────────────────────────────────────────────────────────────────┘
+#
+# WHY dims before facts:
+#   dim_game, dim_payment_method are joined in fact models.
+#   Full rebuild ensures no stale dim rows before fact incremental merge.
+
+resources:
+  jobs:
+    igaming_gold_daily_orchestrator:
+      name: "Gold Daily Orchestrator"
+      max_concurrent_runs: 1
+
+      # schedule:
+      #   quartz_cron_expression: "0 0 6 * * ?"   # daily at 06:00 UTC
+      #   timezone_id: "Europe/Vienna"
+      #   pause_status: "UNPAUSED"
+
+      tasks:
+        # Step 1: rebuild all 4 SQL dims in parallel
+        - task_key: "run_dims_daily_job"
+          run_job_task:
+            job_id: ${resources.jobs.igaming_gold_dims_job.id}
+
+        # Step 2: run incremental facts (+ mart_gameround_hourly)
+        # Only starts after all dims complete successfully
+        - task_key: "run_facts_job"
+          depends_on:
+            - task_key: "run_dims_daily_job"
+          run_job_task:
+            job_id: ${resources.jobs.igaming_gold_facts_job.id}

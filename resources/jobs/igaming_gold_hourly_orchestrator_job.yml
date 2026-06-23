@@ -1,0 +1,50 @@
+# gold_hourly_orchestrator_job.yml
+#
+# CADENCE: every hour at :15 (e.g. 07:15, 08:15, 09:15 ...)
+#
+# WHAT IT DOES:
+#   Chains: SCD2 snapshots refresh → incremental facts + mart_gameround_hourly
+#
+#   ┌──────────────────────────────────────────────────────────────────┐
+#   │              Gold Hourly Orchestrator                            │
+#   │                                                                  │
+#   │  [run_snapshots_job]  ──────►  [run_facts_job]                   │
+#   │         ↓                              ↓                         │
+#   │  snapshots job                 facts job                          │
+#   │  3 SCD2 snapshots              4 facts + mart_gameround_hourly   │
+#   └──────────────────────────────────────────────────────────────────┘
+#
+# WHY snapshots before facts:
+#   mart_pc_account_signup (runs every 10 min on its own) reads dim_player +
+#   dim_tag. Snapshots must be fresh so the PC mart sends up-to-date payloads.
+#   Facts themselves don't join snapshots — but sequencing here ensures
+#   the full pipeline state is consistent within each hourly cycle.
+#
+# The marts+dispatcher job runs on its own independent 10-min schedule.
+# It is NOT part of this orchestrator — different cadence, different trigger.
+
+resources:
+  jobs:
+    igaming_gold_hourly_orchestrator:
+      name: "Gold Hourly Orchestrator"
+      max_concurrent_runs: 1
+
+      # schedule:
+      #   quartz_cron_expression: "0 15 * * * ?"   # every hour at :15
+      #   timezone_id: "UTC"
+      #   pause_status: "UNPAUSED"
+
+      tasks:
+        # Step 1: refresh all 3 SCD2 snapshots in parallel
+        # dbt snapshot is idempotent — if nothing changed, exits in ~10s
+        - task_key: "run_snapshots_job"
+          run_job_task:
+            job_id: ${resources.jobs.igaming_gold_snapshots_job.id}
+
+        # Step 2: run incremental facts (+ mart_gameround_hourly)
+        # Only starts after all snapshots complete successfully
+        - task_key: "run_facts_job"
+          depends_on:
+            - task_key: "run_snapshots_job"
+          run_job_task:
+            job_id: ${resources.jobs.igaming_gold_facts_job.id}

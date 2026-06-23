@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: dim_game
+    description: >
+      Game catalog dimension. One row per unique game (gameId).
+      Source: igaming_dev.silver.game
+
+    columns:
+      - name: sk_game
+        description: "Surrogate key — dbt_utils.generate_surrogate_key on (gameId, country_code)"
+        tests:
+          - not_null
+          - unique
+
+      - name: gameId
+        description: "Natural key — unique game identifier from silver.game"
+        tests:
+          - not_null
+
+      - name: name
+        description: "Display name of the game"
+        tests:
+          - not_null
+
+      - name: country_code
+        description: "Country this game record belongs to"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["de", "at", "dk"]

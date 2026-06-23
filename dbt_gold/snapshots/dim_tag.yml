@@ -1,0 +1,123 @@
+version: 2
+
+snapshots:
+  - name: dim_tag
+    relation: source('silver', 'ig_player_tag')          # direct silver source — no transformations needed
+    description: >
+      SCD Type 2 dimension for player and entity tags.
+      Tracks every change to the `active` flag and `tagCategory` over time.
+      Each row is one version of a tag — dbt_valid_from/dbt_valid_to define the active period.
+      Current state (SCD1 equivalent): WHERE dbt_valid_to = cast('9999-12-31' as timestamp)
+
+      Primary AML compliance use case (compliance API integration):
+      The incremental AML feed derives isTestUser and tagCategories JSON from this table
+      and pushes them to the AML REST endpoint every 10 minutes.
+      With SCD2, point-in-time queries can answer "Was player X a TEST user at transaction time T?"
+        → WHERE targetId = X AND tagCategory = 'TEST' AND active = true
+              AND dbt_valid_from <= T AND dbt_valid_to > T
+      Without SCD2, a player reclassified from TEST→REAL loses their test history — a
+      compliance gap if regulators audit whether AML screening was correctly bypassed for
+      test accounts.
+
+      Key change event tracked: active TRUE→FALSE (tag deactivated) or FALSE→TRUE (reactivated).
+      tagCategory changes (e.g. player promoted from TEST to a different classification)
+      are also captured because updatedAt advances on every tag mutation.
+      Lives in igaming_dev.gold alongside all dimensions and facts.
+
+    config:
+      schema: gold                             # → igaming_dev.gold.dim_tag
+      unique_key: [tag_id, country_code]        # composite PK — tag_id is globally unique but
+                                               # country_code added for multi-country shard consistency
+      strategy: timestamp
+      updated_at: updated_at                   # dbt compares this on every run
+      # NOTE: last_update (legacy incremental column) is NOT in the S3 parquet export.
+      #       updatedAt is the correct SCD2 trigger column — same pattern as dim_userlimit/dim_player.
+      dbt_valid_to_current: "cast('9999-12-31' as timestamp)"
+      # ^^^ NEW in dbt 1.9+: open records get '9999-12-31' instead of NULL
+      #     enables clean BETWEEN joins:
+      #       WHERE event_ts BETWEEN dbt_valid_from AND dbt_valid_to
+      #     instead of:
+      #       WHERE event_ts >= dbt_valid_from AND (dbt_valid_to IS NULL OR event_ts < dbt_valid_to)
+      invalidate_hard_deletes: true
+      # ^^^ if a tag row is hard-deleted from silver, dbt closes it
+      #     by setting dbt_valid_to = current run time instead of leaving it open forever
+      file_format: delta
+
+    columns:
+      - name: dbt_scd_id
+        description: "Surrogate key of the snapshot row — hash of unique_key + dbt_updated_at"
+        tests:
+          - unique:
+              config:
+                severity: error
+          - not_null
+
+      - name: dbt_valid_from
+        description: "Timestamp when this tag version became active (first seen or last change detected)"
+        tests:
+          - not_null
+
+      - name: dbt_valid_to
+        description: >
+          Timestamp when this version was superseded.
+          Set to '9999-12-31' for current (open) rows — use this to get current state:
+          WHERE dbt_valid_to = cast('9999-12-31' as timestamp)
+          Point-in-time join: WHERE event_ts BETWEEN dbt_valid_from AND dbt_valid_to
+          AML compliance join: WHERE dbt_valid_from <= txn_time AND dbt_valid_to > txn_time
+        tests:
+          - not_null
+
+      - name: tag_id
+        description: >
+          Natural primary key — unique tag identifier (varchar 255).
+          Together with country_code forms the unique_key for SCD2 deduplication.
+
+      - name: country_code
+        description: "Country shard the tag originated from (DE / AT / DK). Part of composite unique_key."
+
+      - name: target_id
+        description: >
+          The entity this tag is applied to.
+          When target_type = 'User', this is the player_id — links to dim_player.player_id.
+          Key join column for AML queries: find all tags for a player at a point in time.
+
+      - name: target_type
+        description: >
+          The entity type the tag applies to — e.g. 'User'.
+          Filter to targetType = 'User' for player-level tag queries.
+
+      - name: tag_category
+        description: >
+          Tag classification — determines the business meaning of the tag.
+          Known values: 'TEST' (exclude from AML/reporting), 'VIP', 'FRAUD', others.
+          TEST: player is a test account — AML logic derives isTestUser='Y' when any TEST tag is active.
+          Changes to this field advance updatedAt and are captured as a new SCD2 version.
+
+      - name: is_active
+        description: >
+          Whether this tag version is active (true) or deactivated (false).
+          THIS IS THE PRIMARY SCD2 CHANGE SIGNAL — flipping active triggers a new history row.
+          AML logic: isTestUser='Y' requires tagCategory='TEST' AND active=true.
+          Historical query: what was active status for tag X at time T?
+            → WHERE tagId = X AND dbt_valid_from <= T AND dbt_valid_to > T
+
+      - name: is_discardable
+        description: "Whether the tag can be automatically discarded by the system"
+
+      - name: ingested_at
+        description: "Timestamp when the tag was originally created — does not change across SCD2 versions"
+
+      - name: modified_at
+        description: >
+          Source update timestamp — dbt uses this as the SCD2 trigger (strategy: timestamp).
+          Same value as dbt_updated_at on current rows.
+          On historical rows: reflects the updatedAt at the time that version was captured.
+
+      - name: tag_creator_id
+        description: "ID of the user/system that created the tag"
+
+      - name: tag_updater_id
+        description: "ID of the user/system that last updated the tag"
+
+      - name: version
+        description: "Source version counter — used for dedup ordering in silver merge (same pattern as gametransaction)"

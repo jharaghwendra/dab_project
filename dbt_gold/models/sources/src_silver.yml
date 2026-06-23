@@ -1,0 +1,62 @@
+version: 2
+
+sources:
+  - name: silver
+    database: "{{ target.catalog }}"
+    schema: silver
+    description: "Clean, deduplicated, strict-typed tables upserted by PySpark (Bronze → Silver layer)"
+
+    tables:
+      - name: ig_transaction
+        description: "One row per transaction event. Deduplicated and upserted on transaction_id."
+        columns:
+          - name: transaction_id
+            description: "Primary key — unique transaction identifier"
+
+      - name: ig_player
+        description: "One row per player (latest state). Upserted on player_id."
+        columns:
+          - name: player_id
+            description: "Primary key — unique player identifier"
+
+      - name: ig_payment
+        description: "One row per payment event. Upserted on payment_id."
+        columns:
+          - name: payment_id
+            description: "Primary key — unique payment identifier"
+
+      - name: ig_compliance_check
+        description: "One row per compliance check event. Upserted on check_id."
+        columns:
+          - name: check_id
+            description: "Primary key — unique check identifier"
+
+      - name: ig_round
+        description: "One row per game round. Upserted on round_id."
+        columns:
+          - name: round_id
+            description: "Primary key — unique game round identifier"
+
+      - name: ig_game_catalog
+        description: "Game catalogue — one row per game. Upserted on game_id. Global reference table (same schema per country database)."
+        columns:
+          - name: game_id
+            description: "Primary key — unique game identifier"
+
+      - name: ig_brand_game_catalog
+        description: "Brand-specific game configuration layer. One row per (brand, game). FK game_id → ig_game_catalog.game_id. Contains brand-level enable/disable state, provider info, and compliance overrides."
+        columns:
+          - name: brand_game_id
+            description: "Primary key — unique brand-game identifier (brand prefix + game_id)"
+
+      - name: ig_player_tag
+        description: "User and entity tags. One row per tag_id. Key use: test-user exclusion (targetType='User' AND tagCategory='TEST')."
+        columns:
+          - name: tag_id
+            description: "Primary key — unique tag identifier"
+
+      - name: ig_player_limit
+        description: "Responsible gambling limits per player. One row per limit_id (current state). SCD2 history tracked via dbt snapshot dim_userlimit."
+        columns:
+          - name: limit_id
+            description: "Primary key — unique limit identifier"

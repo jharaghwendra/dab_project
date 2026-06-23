@@ -1,0 +1,51 @@
+version: 2
+
+snapshots:
+  - name: dim_userlimit
+    relation: source('silver', 'ig_player_limit')   # direct silver source — no transformations needed
+    description: >
+      SCD Type 2 dimension for responsible gambling limits.
+      Tracks every change to a player's deposit/loss/wager limits over time.
+      Each row is one version of a limit — dbt_valid_from/dbt_valid_to define the active period.
+      Current state (SCD1 equivalent): WHERE dbt_valid_to = cast('9999-12-31' as timestamp)
+      Used for point-in-time compliance joins: what limit was active for player X on date Y?
+      Lives in igaming_dev.gold alongside all dimensions and facts.
+
+    config:
+      schema: gold                             # → igaming_dev.gold.dim_userlimit
+      unique_key: [limit_id, country_code] # composite PK — one limit can exist per country
+      strategy: timestamp
+      updated_at: updated_at                  # dbt compares this on every run
+      dbt_valid_to_current: "cast('9999-12-31' as timestamp)"
+      # ^^^ NEW in dbt 1.9+: open records get '9999-12-31' instead of NULL
+      #     enables clean BETWEEN joins:
+      #       WHERE event_ts BETWEEN dbt_valid_from AND dbt_valid_to
+      #     instead of:
+      #       WHERE event_ts >= dbt_valid_from AND (dbt_valid_to IS NULL OR event_ts < dbt_valid_to)
+      invalidate_hard_deletes: true
+      # ^^^ if a userlimit row is hard-deleted from silver, dbt closes it
+      #     by setting dbt_valid_to = current run time instead of leaving it open forever
+      file_format: delta
+
+    columns:
+      - name: dbt_scd_id
+        description: "Surrogate key of the snapshot row — hash of unique_key + dbt_updated_at"
+        tests:
+          - unique:
+              config:
+                severity: error
+          - not_null
+
+      - name: dbt_valid_from
+        description: "Timestamp when this version became active (first seen or last change detected)"
+        tests:
+          - not_null
+
+      - name: dbt_valid_to
+        description: >
+          Timestamp when this version was superseded.
+          Set to '9999-12-31' for current (open) rows — use this to get current state:
+          WHERE dbt_valid_to = cast('9999-12-31' as timestamp)
+          Point-in-time join: WHERE event_ts BETWEEN dbt_valid_from AND dbt_valid_to
+        tests:
+          - not_null

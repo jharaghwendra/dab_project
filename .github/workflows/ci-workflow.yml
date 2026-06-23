@@ -1,0 +1,71 @@
+---
+name: 'CI Workflow'
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+  pull_request:
+    branches:
+      - 'main'
+
+jobs:
+  ci_job:
+    name: 'CI Job'
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v3
+
+      - name: 'Setup Python'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: 'Install uv'
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            pyproject.toml
+            dbt_gold/packages.yml
+
+      - name: 'Install dependencies'
+        run: uv sync --group ci --no-dev --frozen
+
+      - name: 'Run Pytests and generate coverage report'
+        run: |
+          uv run --no-sync pytest --disable-warnings --cov \
+            --cov-report=term-missing \
+            --cov-report=html
+
+      - name: 'Upload coverage HTML report as artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html-report
+          path: htmlcov
+
+      # ── dbt CI checks ──────────────────────────────────────────────────────
+      # Validates dbt project syntax WITHOUT connecting to Databricks.
+      # dbt parse compiles all models, checks ref()/source() resolution,
+      # and validates packages.yml — catches broken SQL/Python before deploy.
+      #
+      # DATABRICKS_TOKEN=dummy: dbt parse doesn't make any HTTP calls,
+      # but dbt-databricks requires the env var to be set for profile loading.
+      - name: 'Install dbt-databricks'
+        run: pip install "dbt-databricks>=1.8.0,<2.0.0"
+
+      - name: 'dbt deps — install packages'
+        working-directory: dbt_gold
+        run: dbt deps
+
+      - name: 'dbt parse — validate model syntax'
+        working-directory: dbt_gold
+        env:
+          DATABRICKS_TOKEN: dummy-ci-token
+          DBT_CATALOG: igaming_dev
+          DATABRICKS_HOST: dbc-71b2b101-72ab.cloud.databricks.com
+          DBT_HTTP_PATH: /sql/1.0/warehouses/9299d8e6b7abab31
+        run: dbt parse --profiles-dir .

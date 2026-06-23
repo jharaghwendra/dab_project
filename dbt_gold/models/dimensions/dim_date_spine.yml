@@ -1,0 +1,77 @@
+version: 2
+
+models:
+  - name: dim_date_spine
+    description: >
+      Hourly date spine covering 2025-01-01 → 2026-12-31.
+      Each UTC hour is stored twice — once as UTC, once converted to Europe/Vienna (CET/CEST).
+      This lets BI reports filter by timezone without doing any conversion at query time.
+
+      Python model equivalent of dim_date_time.sql — same output, different implementation.
+      Uses pandas.date_range() + tz_convert() instead of Spark SQL sequence()/explode().
+      pandas correctly handles CET/CEST DST transitions (e.g. 2025-03-30 spring forward).
+
+      Materialization: table (full rebuild on each dbt run — static reference data).
+      Primary key: (sk_date_time, timezone).
+      sk_date_time format: YYYYMMDDHH in LOCAL time — matches the format produced by
+      fact_gametransaction_kpi and fact_payments for JOIN compatibility.
+
+    config:
+      materialized: table
+      file_format: delta
+      schema: gold
+
+    columns:
+      - name: sk_date_time
+        description: >
+          Surrogate key — YYYYMMDDHH integer in LOCAL time for that timezone row.
+          Matches the sk_date_time produced in fact_gametransaction_kpi and fact_payments.
+          Example: 2025060714 = 2026-06-07 14:00 local time.
+        tests:
+          - not_null
+          - unique:
+              config:
+                # (sk_date_time, timezone) is the true PK — unique per timezone row
+                # This unique test covers sk_date_time alone (should be unique within each tz)
+                severity: warn
+
+      - name: date
+        description: "Calendar date in local time for this timezone row (DATE type)"
+        tests:
+          - not_null
+
+      - name: hour
+        description: "Hour of day 0-23 in local time (ByteType)"
+        tests:
+          - not_null
+
+      - name: day
+        description: "Day of month 1-31 in local time (ByteType)"
+        tests:
+          - not_null
+
+      - name: month
+        description: "Month 1-12 in local time (ByteType)"
+        tests:
+          - not_null
+
+      - name: year
+        description: "4-digit year in local time (IntegerType)"
+        tests:
+          - not_null
+
+      - name: quarter
+        description: "Quarter 1-4 in local time (ByteType)"
+        tests:
+          - not_null
+
+      - name: timezone
+        description: >
+          Timezone identifier — either 'UTC' or 'Europe/Vienna'.
+          Filter WHERE timezone = 'Europe/Vienna' for CET/CEST reporting (default for BI dashboards).
+          Filter WHERE timezone = 'UTC' for event-time technical queries.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["UTC", "Europe/Vienna"]

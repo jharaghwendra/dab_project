@@ -1,0 +1,29 @@
+resources:
+  pipelines:
+    citibike_etl_dlt_pipeline:
+      name: citibike_etl_dlt_pipeline
+      catalog: "${var.catalog}"
+      target: "default"
+      notifications:
+        - email_recipients:
+            - jharaghwendra@gmail.com
+          alerts:
+            - on-update-failure
+            - on-update-fatal-failure
+            - on-flow-failure
+      serverless: true
+      continuous: false
+      development: "${var.dev_flag}"
+      photon: true
+      channel: CURRENT
+      configuration:
+        catalog: "${var.catalog}"
+      libraries:
+        - file:
+            path: ../../citibike_etl/dlt/transformations/01_bronze/01_bronze_citibike.py
+        - file:
+            path: ../../citibike_etl/dlt/transformations/02_silver/02_silver_citibike.py
+        - file:
+            path: ../../citibike_etl/dlt/transformations/03_gold/03_gold_citibike_daily_ride_summary.py
+        - file:
+            path: ../../citibike_etl/dlt/transformations/03_gold/03_gold_citibike_daily_station_performance.py
