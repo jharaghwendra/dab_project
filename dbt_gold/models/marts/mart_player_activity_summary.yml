@@ -1,0 +1,75 @@
+version: 2
+
+models:
+  - name: mart_player_activity_summary
+    description: >
+      Generic player summary mart with anonymized field names and a pre-built JSON payload.
+      One row per player (playerId + country_code).
+      Preserves the incremental transformation pattern, watermarking, and payload serialization.
+
+    config:
+      materialized: incremental
+      incremental_strategy: merge
+      file_format: delta
+      schema: gold
+
+    columns:
+      - name: online_customer_id
+        description: "Anonymized player identifier used as the merge key."
+        tests:
+          - not_null
+
+      - name: country_code
+        description: >
+          Country shard (DE / AT / DK). Part of composite merge key.
+          Needed because userId is unique per country shard, not globally.
+        tests:
+          - not_null
+
+      - name: payload_json
+        description: >
+          Full serialized JSON string for the anonymized player summary event.
+          Ready for downstream processing with no further transformation needed.
+        tests:
+          - not_null
+
+      - name: source_updated_at
+        description: >
+          Watermark column — updatedAt from dim_player at the time this row was staged.
+          Used by the next incremental run to filter only changed players.
+          Equivalent to a standard incremental watermark control pattern.
+        tests:
+          - not_null
+
+      - name: tag_updated_at
+        description: >
+          Max dbt_updated_at from dim_tag for this player.
+          Used alongside source_updated_at to detect related attribute changes.
+          NULL if player has no tags.
+
+      - name: player_alias
+        description: "Anonymized player label used for summary output."
+        tests:
+          - not_null
+
+      - name: region_code
+        description: "Generic region code derived from the source profile."
+
+      - name: account_tier
+        description: "Generic account segmentation label used for reporting."
+
+      - name: is_verified
+        description: "Generic verification flag carried through for summary analysis."
+
+      - name: dispatched_at
+        description: >
+          Timestamp when nb_pc_dispatcher successfully POSTed this row.
+          NULL = not yet dispatched — dispatcher reads WHERE dispatched_at IS NULL.
+          Set by dispatcher after receiving HTTP 200 from the compliance endpoint.
+
+      - name: dispatch_error
+        description: >
+          Error response body if the POST failed.
+          NULL = no error. Non-NULL = dead-letter — requires manual investigation.
+          Dispatcher sets this on non-200 response instead of raising an exception,
+          so one failed row does not block processing of subsequent rows.

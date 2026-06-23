@@ -1,0 +1,48 @@
+version: 2
+
+snapshots:
+  - name: dim_player
+    relation: source('silver', 'ig_player')    # direct silver source — no transformations needed
+    description: >
+      SCD Type 2 dimension for player profiles (Kimball standard naming).
+      Tracks every change to a player's profile, account state, and analytical attributes.
+      Each row is one version of a player record — dbt_valid_from/dbt_valid_to define the active period.
+      Current state (SCD1 equivalent): WHERE dbt_valid_to = cast('9999-12-31' as timestamp)
+      Used for point-in-time history joins on current and historical player attributes.
+      Lives in igaming_dev.gold alongside all dimensions and facts.
+
+    config:
+      schema: gold                             # → igaming_dev.gold.dim_player
+      unique_key: [player_id, country_code]    # composite PK — one player per country
+      strategy: timestamp
+      updated_at: updated_at                   # dbt compares this on every run
+      dbt_valid_to_current: "cast('9999-12-31' as timestamp)"
+      # ^^^ open records get '9999-12-31' instead of NULL
+      #     enables clean BETWEEN joins:
+      #       WHERE event_ts BETWEEN dbt_valid_from AND dbt_valid_to
+      invalidate_hard_deletes: true
+      # ^^^ if a player row is hard-deleted from silver, dbt closes it
+      file_format: delta
+
+    columns:
+      - name: dbt_scd_id
+        description: "Surrogate key of the snapshot row — hash of unique_key + dbt_updated_at"
+        tests:
+          - unique:
+              config:
+                severity: error
+          - not_null
+
+      - name: dbt_valid_from
+        description: "Timestamp when this version of the player profile became active"
+        tests:
+          - not_null
+
+      - name: dbt_valid_to
+        description: >
+          Timestamp when this version was superseded.
+          Set to '9999-12-31' for current (open) rows — use this to get current state:
+          WHERE dbt_valid_to = cast('9999-12-31' as timestamp)
+          Point-in-time join: WHERE event_ts BETWEEN dbt_valid_from AND dbt_valid_to
+        tests:
+          - not_null

@@ -1,0 +1,59 @@
+# profiles.yml — dbt connection profile for dbt_gold project
+#
+# TWO USES OF THIS FILE:
+#
+# 1. LOCAL DEV (terminal):
+#    dbt looks for profiles.yml in ~/.dbt/ by default.
+#    To use THIS file instead: dbt run --profiles-dir .
+#    DATABRICKS_TOKEN must be set as an env var — never hardcode the token here.
+#    Set it in PowerShell: $env:DATABRICKS_TOKEN = "dapi..."
+#
+# 2. DATABRICKS WORKFLOWS (dbt_task):
+#    DAB deploys this file to the workspace.
+#    The dbt_task uses profiles_directory pointing to the workspace copy.
+#    For SQL models: connection is auto-injected by Databricks (token not needed).
+#    For Python models: python_job_config IS read from this file — required.
+#    DATABRICKS_TOKEN env var is not needed in workflow context (identity = run_as SP).
+#
+# HOW env_var() WORKS:
+#    {{ env_var('VAR_NAME') }}              — required, dbt fails if not set
+#    {{ env_var('VAR_NAME', 'default') }}   — optional, falls back to default if not set
+#    In CI/CD: set as GitHub Actions secrets → injected at run time
+#    In local dev: set in your shell session before running dbt
+
+dbt_gold:
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
+
+  outputs:
+    dev:
+      type: databricks
+      catalog: "{{ env_var('DBT_CATALOG', 'igaming_dev') }}"
+      schema: gold
+      host: "{{ env_var('DATABRICKS_HOST', 'dbc-71b2b101-72ab.cloud.databricks.com') }}"
+      http_path: "{{ env_var('DBT_HTTP_PATH', '/sql/1.0/warehouses/9299d8e6b7abab31') }}"
+      token: "{{ env_var('DATABRICKS_TOKEN') }}"
+      threads: 4
+      python_job_config:
+        submission_method: serverless_cluster   # required for dbt Python models
+
+    test:
+      type: databricks
+      catalog: "{{ env_var('DBT_CATALOG', 'igaming_test') }}"
+      schema: gold
+      host: "{{ env_var('DATABRICKS_HOST', 'dbc-71b2b101-72ab.cloud.databricks.com') }}"
+      http_path: "{{ env_var('DBT_HTTP_PATH', '/sql/1.0/warehouses/9299d8e6b7abab31') }}"
+      token: "{{ env_var('DATABRICKS_TOKEN') }}"
+      threads: 4
+      python_job_config:
+        submission_method: serverless_cluster   # required for dbt Python models
+
+    prod:
+      type: databricks
+      catalog: "{{ env_var('DBT_CATALOG', 'igaming_prod') }}"
+      schema: gold
+      host: "{{ env_var('DATABRICKS_HOST', 'dbc-71b2b101-72ab.cloud.databricks.com') }}"
+      http_path: "{{ env_var('DBT_HTTP_PATH', '/sql/1.0/warehouses/9299d8e6b7abab31') }}"
+      token: "{{ env_var('DATABRICKS_TOKEN') }}"
+      threads: 4
+      python_job_config:
+        submission_method: serverless_cluster   # required for dbt Python models

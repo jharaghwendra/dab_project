@@ -1,0 +1,17 @@
+.coverage
+.databricks/
+.pytest_cache/
+.venv/
+.venv_dbc/
+.venv_pyspark/
+.vscode/
+build/
+dist/
+htmlcov/
+logs/
+scratch/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.code-workspace

@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: dim_payment_method
+    description: >
+      Payment method dimension. One row per unique payment method.
+      Source: igaming_dev.silver.payment
+
+    columns:
+      - name: sk_payment_method
+        description: "Surrogate key — dbt_utils.generate_surrogate_key on (method, provider, gateway, type)"
+        tests:
+          - not_null
+          - unique
+
+      - name: method
+        description: "Payment method category (WALLET, CARD, BANK, VOUCHER etc.)"
+        tests:
+          - not_null
+
+      - name: provider
+        description: "Payment provider name (PAYPAL, KLARNA, NUVEI etc.)"
+        tests:
+          - not_null
+
+      - name: gateway
+        description: "PSP routing gateway (PAYMENT_IQ, SPORTRADAR etc.)"
+        tests:
+          - not_null
+
+      - name: type
+        description: "Transaction direction — DEPOSIT, WITHDRAWAL, or REFUND"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["DEPOSIT", "WITHDRAWAL", "REFUND"]
+          - accepted_values_case_insensitive:
+              values: ["DEPOSIT", "WITHDRAWAL", "REFUND"]

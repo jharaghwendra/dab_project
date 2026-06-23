@@ -1,0 +1,165 @@
+version: 2
+
+models:
+  - name: fact_payments
+    description: >
+      One row per payment event. Incremental merge on paymentId.
+      Source: igaming_dev.silver.payment
+
+    columns:
+      - name: paymentId
+        description: "Primary key — unique payment identifier"
+        tests:
+          - not_null
+          - unique
+
+      - name: country_code
+        description: "Country the payment belongs to"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["de", "at", "dk"]
+          - accepted_values_case_insensitive:
+              values: ["de", "at", "dk"]
+
+      - name: sk_date_time
+        description: "FK → dim_date_spine.sk_date_time (YYYYMMDDHH local time)"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date_spine')
+              field: sk_date_time
+
+unit_tests:
+
+  # ---------------------------------------------------------------------------
+  # Unit test 1 — net_amount_eur formula
+  # Verifies: net_amount_eur = ROUND(amount_eur - fee_eur, 4)
+  # Also verifies: NULL fee_eur is treated as 0 via COALESCE
+  # ---------------------------------------------------------------------------
+  - name: unit_test_net_amount_eur_formula
+    model: fact_payments
+    description: >
+      net_amount_eur must equal ROUND(amount_eur - fee_eur, 4).
+      When fee_eur is NULL it should be coerced to 0 (COALESCE).
+
+    overrides:
+      macros:
+        is_incremental: false
+
+    given:
+      - input: source('silver', 'ig_payment')
+        rows:
+          # normal case: both values present
+          - paymentId: "PAY-001"
+            country_code: "de"
+            status: "SUCCEEDED"
+            declinedDepositId: null
+            amount_eur: 100.0
+            fee_eur: 2.5
+            firstOfType: 0
+            type: "DEPOSIT"
+            method: "CARD"
+            provider: "NUVEI"
+            gateway: "PAYMENT_IQ"
+            createdAt: "2026-01-15 10:00:00"
+            succeededAt: "2026-01-15 10:01:00"
+          # NULL fee case: should coalesce to 0
+          - paymentId: "PAY-002"
+            country_code: "de"
+            status: "SUCCEEDED"
+            declinedDepositId: null
+            amount_eur: 50.0
+            fee_eur: null
+            firstOfType: 1
+            type: "DEPOSIT"
+            method: "WALLET"
+            provider: "PAYPAL"
+            gateway: "PAYMENT_IQ"
+            createdAt: "2026-01-15 11:00:00"
+            succeededAt: "2026-01-15 11:01:00"
+
+      - input: ref('dim_payment_method')
+        rows:
+          - sk_payment_method: "abc123"
+            method: "CARD"
+            provider: "NUVEI"
+            gateway: "PAYMENT_IQ"
+            type: "DEPOSIT"
+          - sk_payment_method: "def456"
+            method: "WALLET"
+            provider: "PAYPAL"
+            gateway: "PAYMENT_IQ"
+            type: "DEPOSIT"
+
+    expect:
+      rows:
+        - paymentId: "PAY-001"
+          amount_eur: 100.0
+          fee_eur: 2.5
+          net_amount_eur: 97.5
+          is_first_deposit: 0
+        - paymentId: "PAY-002"
+          amount_eur: 50.0
+          fee_eur: null
+          net_amount_eur: 50.0      # COALESCE(50, 0) - COALESCE(null, 0) = 50 - 0
+          is_first_deposit: 1
+
+  # ---------------------------------------------------------------------------
+  # Unit test 2 — declined deposits excluded
+  # Verifies: rows with declinedDepositId IS NOT NULL must be filtered out
+  # ---------------------------------------------------------------------------
+  - name: unit_test_declined_deposits_excluded
+    model: fact_payments
+    description: >
+      Rows where declinedDepositId is not null must never appear in fact_payments.
+      These are declined deposit retry rows that would double-count deposits.
+
+    overrides:
+      macros:
+        is_incremental: false
+
+    given:
+      - input: source('silver', 'ig_payment')
+        rows:
+          # valid payment — should appear
+          - paymentId: "PAY-VALID"
+            country_code: "de"
+            status: "SUCCEEDED"
+            declinedDepositId: null
+            amount_eur: 200.0
+            fee_eur: 1.0
+            firstOfType: 0
+            type: "DEPOSIT"
+            method: "CARD"
+            provider: "NUVEI"
+            gateway: "PAYMENT_IQ"
+            createdAt: "2026-01-15 10:00:00"
+            succeededAt: "2026-01-15 10:01:00"
+          # declined retry — must be EXCLUDED from output
+          - paymentId: "PAY-DECLINED-RETRY"
+            country_code: "de"
+            status: "SUCCEEDED"
+            declinedDepositId: "PAY-ORIGINAL-001"
+            amount_eur: 200.0
+            fee_eur: 1.0
+            firstOfType: 0
+            type: "DEPOSIT"
+            method: "CARD"
+            provider: "NUVEI"
+            gateway: "PAYMENT_IQ"
+            createdAt: "2026-01-15 10:05:00"
+            succeededAt: "2026-01-15 10:06:00"
+
+      - input: ref('dim_payment_method')
+        rows:
+          - sk_payment_method: "abc123"
+            method: "CARD"
+            provider: "NUVEI"
+            gateway: "PAYMENT_IQ"
+            type: "DEPOSIT"
+
+    expect:
+      rows:
+        # only PAY-VALID should appear — PAY-DECLINED-RETRY is filtered
+        - paymentId: "PAY-VALID"
