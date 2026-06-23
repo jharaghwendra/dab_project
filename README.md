@@ -1,12 +1,12 @@
-# Databricks Lakehouse Projects with DAB (Databricks Asset Bundle) and dbt
+# Databricks Lakehouse Portfolio
 
-This repository contains three Databricks deliverables:
+This repository presents three Databricks projects that I use to demonstrate end-to-end Lakehouse work:
 
 - a Citibike Databricks Asset Bundle project with its own catalog and schema
 - an iGaming Databricks Asset Bundle project presented under the `gaming_lakehouse` project name
 - an iGaming dbt Gold-layer project in `dbt_gold/`
 
-Together they show how I build Databricks projects across ingestion, transformation, orchestration, testing, and Gold-layer modeling.
+Together they show how I build Databricks solutions across ingestion, transformation, orchestration, testing, and Gold-layer modeling.
 
 ---
 
@@ -14,7 +14,7 @@ Together they show how I build Databricks projects across ingestion, transformat
 
 - Citibike DAB: separate catalog/schema, Bronze-Silver-Gold processing, local and Databricks Connect tests
 - iGaming DAB: multi-country Bronze-Silver processing with jobs and pipelines in `resources/jobs/` and `resources/pipelines/`
-- iGaming dbt Gold layer: located in `dbt_gold/` with incremental models, tests, snapshots, and CI/CD workflows to support the iGaming BI platform
+- iGaming dbt Gold layer: located in `dbt_gold/` with incremental models, tests, snapshots, and CI/CD workflows supporting the iGaming BI platform
 
 ## Where To Look
 
@@ -202,14 +202,15 @@ The GitHub Actions workflows live in [.github/workflows](.github/workflows).
 
 ## Docs And Lineage Images
 
-The `docs/` folder can hold the visual lineage artifacts for this project.
+The top-level `docs/` folder contains the visual portfolio artifacts for this repository.
 
 Recommended image files:
 
-- `docs/igaming_bronze_silver_job_DAG.png` for the Bronze → Silver task graph across AT, DE, and DK
+- `docs/igaming_bronze_silver_job_DAG.png` for the iGaming Bronze → Silver task graph across AT, DE, and DK
 - `docs/igaming_gold_dbt_lineage.png` for the dbt Gold lineage showing snapshots, facts, dimensions, and marts
+- `docs/cicd-workflow.drawio` for the Databricks development and CI/CD workflow
 
-These images show the databricks job-task flow and dbt model lineage.
+These artifacts show the Databricks job-task flow, dbt model lineage, and CI/CD process behind the portfolio story.
 
 ---
 
