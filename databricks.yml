@@ -35,6 +35,20 @@ variables:
   warehouse_id:
     description: SQL warehouse used by dbt_task in gold layer jobs
     default: "9299d8e6b7abab31"
+  monitoring_targets:
+    description: >-
+      Cross-product of countries x gaming_tables as a JSON array string of "country|table"
+      entries, consumed directly by igaming_pipeline_monitoring_job's for_each_task.inputs.
+      Must stay a JSON-encoded string (not a YAML list) — for_each_task.inputs is a string
+      field, and a complex/array-typed variable substitutes as a native list, which fails
+      bundle validation ("expected string, found sequence").
+    default: >-
+      ["de|ig_transaction", "de|ig_player", "de|ig_payment", "de|ig_compliance_check",
+      "de|ig_round", "de|ig_game_catalog", "de|ig_brand_game_catalog", "de|ig_player_tag", "de|ig_player_limit",
+      "at|ig_transaction", "at|ig_player", "at|ig_payment", "at|ig_compliance_check",
+      "at|ig_round", "at|ig_game_catalog", "at|ig_brand_game_catalog", "at|ig_player_tag", "at|ig_player_limit",
+      "dk|ig_transaction", "dk|ig_player", "dk|ig_payment", "dk|ig_compliance_check",
+      "dk|ig_round", "dk|ig_game_catalog", "dk|ig_brand_game_catalog", "dk|ig_player_tag", "dk|ig_player_limit"]
 
 targets:
   dev:

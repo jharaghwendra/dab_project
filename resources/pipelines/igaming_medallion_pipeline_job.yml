@@ -270,7 +270,7 @@ resources:
               - "--country_code"
               - "de"
               - "--table_name"
-              - "userlimit"
+              - "ig_player_limit"
             source: WORKSPACE
 
     igaming_medallion_bronze_silver_at:
@@ -305,7 +305,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "gametransaction"
+              - "ig_transaction"
             source: WORKSPACE
         - task_key: "silver_gametransaction_at"
           depends_on:
@@ -319,7 +319,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "gametransaction"
+              - "ig_transaction"
             source: WORKSPACE
         - task_key: "bronze_userdata_at"
           depends_on:
@@ -333,7 +333,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "userdata"
+              - "ig_player"
             source: WORKSPACE
         - task_key: "silver_userdata_at"
           depends_on:
@@ -347,7 +347,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "userdata"
+              - "ig_player"
             source: WORKSPACE
         - task_key: "bronze_payment_at"
           depends_on:
@@ -361,7 +361,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "payment"
+              - "ig_payment"
             source: WORKSPACE
         - task_key: "silver_payment_at"
           depends_on:
@@ -375,7 +375,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "payment"
+              - "ig_payment"
             source: WORKSPACE
         - task_key: "bronze_check_at"
           depends_on:
@@ -389,7 +389,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "check"
+              - "ig_compliance_check"
             source: WORKSPACE
         - task_key: "silver_check_at"
           depends_on:
@@ -403,7 +403,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "check"
+              - "ig_compliance_check"
             source: WORKSPACE
         - task_key: "bronze_gameround_at"
           depends_on:
@@ -417,7 +417,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "gameround"
+              - "ig_round"
             source: WORKSPACE
         - task_key: "silver_gameround_at"
           depends_on:
@@ -431,7 +431,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "gameround"
+              - "ig_round"
             source: WORKSPACE
         - task_key: "bronze_game_at"
           depends_on:
@@ -445,7 +445,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "game"
+              - "ig_game_catalog"
             source: WORKSPACE
         - task_key: "silver_game_at"
           depends_on:
@@ -459,7 +459,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "game"
+              - "ig_game_catalog"
             source: WORKSPACE
         - task_key: "bronze_brandgame_at"
           depends_on:
@@ -473,7 +473,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "brandgame"
+              - "ig_brand_game_catalog"
             source: WORKSPACE
         - task_key: "silver_brandgame_at"
           depends_on:
@@ -487,7 +487,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "brandgame"
+              - "ig_brand_game_catalog"
             source: WORKSPACE
         - task_key: "bronze_tag_at"
           depends_on:
@@ -501,7 +501,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "tag"
+              - "ig_player_tag"
             source: WORKSPACE
         - task_key: "silver_tag_at"
           depends_on:
@@ -515,7 +515,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "tag"
+              - "ig_player_tag"
             source: WORKSPACE
         - task_key: "bronze_userlimit_at"
           depends_on:
@@ -529,7 +529,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "userlimit"
+              - "ig_player_limit"
             source: WORKSPACE
         - task_key: "silver_userlimit_at"
           depends_on:
@@ -543,7 +543,7 @@ resources:
               - "--country_code"
               - "at"
               - "--table_name"
-              - "userlimit"
+              - "ig_player_limit"
             source: WORKSPACE
 
     igaming_medallion_bronze_silver_dk:
@@ -578,7 +578,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "gametransaction"
+              - "ig_transaction"
             source: WORKSPACE
         - task_key: "silver_gametransaction_dk"
           depends_on:
@@ -592,7 +592,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "gametransaction"
+              - "ig_transaction"
             source: WORKSPACE
         - task_key: "bronze_userdata_dk"
           depends_on:
@@ -606,7 +606,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "userdata"
+              - "ig_player"
             source: WORKSPACE
         - task_key: "silver_userdata_dk"
           depends_on:
@@ -620,7 +620,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "userdata"
+              - "ig_player"
             source: WORKSPACE
         - task_key: "bronze_payment_dk"
           depends_on:
@@ -634,7 +634,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "payment"
+              - "ig_payment"
             source: WORKSPACE
         - task_key: "silver_payment_dk"
           depends_on:
@@ -648,7 +648,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "payment"
+              - "ig_payment"
             source: WORKSPACE
         - task_key: "bronze_check_dk"
           depends_on:
@@ -662,7 +662,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "check"
+              - "ig_compliance_check"
             source: WORKSPACE
         - task_key: "silver_check_dk"
           depends_on:
@@ -676,7 +676,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "check"
+              - "ig_compliance_check"
             source: WORKSPACE
         - task_key: "bronze_gameround_dk"
           depends_on:
@@ -690,7 +690,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "gameround"
+              - "ig_round"
             source: WORKSPACE
         - task_key: "silver_gameround_dk"
           depends_on:
@@ -704,7 +704,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "gameround"
+              - "ig_round"
             source: WORKSPACE
         - task_key: "bronze_game_dk"
           depends_on:
@@ -718,7 +718,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "game"
+              - "ig_game_catalog"
             source: WORKSPACE
         - task_key: "silver_game_dk"
           depends_on:
@@ -732,7 +732,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "game"
+              - "ig_game_catalog"
             source: WORKSPACE
         - task_key: "bronze_brandgame_dk"
           depends_on:
@@ -746,7 +746,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "brandgame"
+              - "ig_brand_game_catalog"
             source: WORKSPACE
         - task_key: "silver_brandgame_dk"
           depends_on:
@@ -760,7 +760,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "brandgame"
+              - "ig_brand_game_catalog"
             source: WORKSPACE
         - task_key: "bronze_tag_dk"
           depends_on:
@@ -774,7 +774,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "tag"
+              - "ig_player_tag"
             source: WORKSPACE
         - task_key: "silver_tag_dk"
           depends_on:
@@ -788,7 +788,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "tag"
+              - "ig_player_tag"
             source: WORKSPACE
         - task_key: "bronze_userlimit_dk"
           depends_on:
@@ -802,7 +802,7 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "userlimit"
+              - "ig_player_limit"
             source: WORKSPACE
         - task_key: "silver_userlimit_dk"
           depends_on:
@@ -816,5 +816,5 @@ resources:
               - "--country_code"
               - "dk"
               - "--table_name"
-              - "userlimit"
+              - "ig_player_limit"
             source: WORKSPACE

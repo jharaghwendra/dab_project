@@ -1,0 +1,85 @@
+# igaming_pipeline_monitoring_job.yml
+#
+# WHAT THIS JOB DOES:
+#   Operational monitoring layer for the iGaming Bronze/Silver pipeline.
+#   Runs after ingestion to summarize failures, row-count anomalies, schema drift,
+#   and backfill/backlog signals.
+#
+# WHY SEPARATE FROM BRONZE/SILVER:
+#   Core ingestion must stay deterministic and checkpoint-driven.
+#   This job only observes the pipeline and produces a human-readable summary.
+#
+# ANALYSIS TASK:
+#   Rule-based, not an LLM agent. A Databricks Jobs "Genie Code" task type would fit this role,
+#   but it's not part of the Databricks Asset Bundle job task schema yet (confirmed via
+#   `databricks bundle schema`, CLI v0.297.2 — bundles own the full task list on every deploy,
+#   so a UI-only task type can't be used here). This task produces the same summary_text
+#   output deterministically instead, and stays fully bundle-deployable.
+#
+# OUTPUT:
+#   A monitoring summary that can be emailed or surfaced to the team.
+
+resources:
+  jobs:
+    igaming_pipeline_monitoring_job:
+      name: "iGaming Pipeline Monitoring"
+      max_concurrent_runs: 1
+
+      # schedule:
+      #   quartz_cron_expression: "0 5/10 * * * ?"   # every 10 min, offset from ingestion
+      #   timezone_id: "UTC"
+      #   pause_status: "UNPAUSED"
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+            dependencies:
+              - ../../dist/dab_project-${var.wheel_version}-py3-none-any.whl
+
+      tasks:
+        # ── Task 1: summarize Bronze/Silver health for every table/country ───
+        # for_each_task iterates once per "country|table" string in ${var.monitoring_targets}
+        # (the cross-product of ${var.countries} x ${var.gaming_tables} — for_each_task inputs
+        # must be a single JSON array, so the two lists are pre-combined in databricks.yml).
+        # concurrency: 4 runs up to 4 iterations in parallel instead of one at a time.
+        #
+        # NOTE: each iteration is a separate task instance, so taskValues set inside one
+        # iteration can't be read back by task_key from a downstream task — the inner script
+        # writes its own row directly to Delta instead (see monitoring_summary_analyzer.py).
+        - task_key: "pipeline_health_summary"
+          for_each_task:
+            inputs: "${var.monitoring_targets}"
+            concurrency: 4
+            task:
+              task_key: "pipeline_health_summary_iteration"
+              environment_key: default
+              spark_python_task:
+                python_file: "${workspace.file_path}/gaming_lakehouse/scripts/03_gold/monitoring_summary_analyzer.py"
+                source: WORKSPACE
+                parameters:
+                  - "--catalog"
+                  - "${var.catalog}"
+                  - "--target"
+                  - "{{input}}"
+                  - "--lookback_minutes"
+                  - "60"
+                  - "--summary_table"
+                  - "${var.catalog}.gold.pipeline_monitoring_summary"
+
+        # ── Task 2: notify the team ──────────────────────────────────────────
+        # This task can send the summary by email or another approved channel.
+        # Reads every row written across all for_each_task iterations in this run
+        # (see monitoring_email_sender.py) and sends one combined digest.
+        - task_key: "send_monitoring_email"
+          depends_on:
+            - task_key: "pipeline_health_summary"
+          environment_key: default
+          spark_python_task:
+            python_file: "${workspace.file_path}/gaming_lakehouse/scripts/03_gold/monitoring_email_sender.py"
+            source: WORKSPACE
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--lookback_minutes"
+              - "60"

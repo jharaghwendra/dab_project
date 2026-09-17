@@ -1,0 +1,58 @@
+# igaming_bronze_backfill_job.yml
+#
+# Manual, operator-triggered Bronze backfill. Use this for missed files, a source
+# outage, a failed production run, corrected historical files, migration history,
+# or data-quality remediation after the source data has been repaired.
+#
+# The job deliberately uses a separate Auto Loader checkpoint and schema location
+# derived from country, table, and the requested date window. It appends to the
+# normal Bronze table without touching the live 10-minute pipeline checkpoint.
+#
+# The date window is [backfill_from_date, backfill_to_date) in UTC and filters
+# cloud-file modification time, not a business-date column inside the file.
+# Example: 2026-07-01 to 2026-07-15 processes files modified from July 1 inclusive
+# through just before July 15 00:00 UTC.
+
+resources:
+  jobs:
+    igaming_bronze_backfill_job:
+      name: "iGaming Bronze Backfill"
+      max_concurrent_runs: 1
+
+      # No schedule: backfills should be explicitly reviewed and started by an operator.
+      parameters:
+        - name: catalog
+          default: "${var.catalog}"
+        - name: country_code
+          default: "de"
+        - name: table_name
+          default: "ig_transaction"
+        - name: backfill_from_date
+          default: "2026-07-01"
+        - name: backfill_to_date
+          default: "2026-07-15"
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+            dependencies:
+              - ../../dist/dab_project-${var.wheel_version}-py3-none-any.whl
+
+      tasks:
+        - task_key: bronze_backfill
+          environment_key: default
+          spark_python_task:
+            python_file: "${workspace.file_path}/gaming_lakehouse/scripts/01_bronze/igaming_s3_to_adls_bronze_backfill.py"
+            source: WORKSPACE
+            parameters:
+              - "--catalog"
+              - "{{job.parameters.catalog}}"
+              - "--country_code"
+              - "{{job.parameters.country_code}}"
+              - "--table_name"
+              - "{{job.parameters.table_name}}"
+              - "--backfill_from_date"
+              - "{{job.parameters.backfill_from_date}}"
+              - "--backfill_to_date"
+              - "{{job.parameters.backfill_to_date}}"

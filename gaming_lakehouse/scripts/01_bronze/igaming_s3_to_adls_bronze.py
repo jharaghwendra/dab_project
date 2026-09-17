@@ -60,6 +60,7 @@ raw_stream = (
     .option("cloudFiles.format", "parquet")
     .option("cloudFiles.schemaLocation", schema_evolution_path)
     .option("cloudFiles.inferColumnTypes", "true")
+    .option("cloudFiles.schemaEvolutionMode", "addNewColumns")  # Default type is "addNewColumns"
     .load(source_path)
 )
 
