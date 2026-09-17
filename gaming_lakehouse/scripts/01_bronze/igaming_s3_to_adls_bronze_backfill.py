@@ -2,7 +2,7 @@ import argparse
 import sys
 from datetime import datetime, timezone
 
-from pyspark.sql.functions import col, current_timestamp, lit
+from pyspark.sql.functions import col, countDistinct, current_timestamp, lit
 
 
 # Rather than resetting the production Auto Loader checkpoint, this task uses an
@@ -44,8 +44,9 @@ except ValueError as exc:
 if parsed_from >= parsed_to:
     raise ValueError("'backfill_to_date' must be after 'backfill_from_date'.")
 
-# Auto Loader's modifiedBefore boundary is exclusive. The requested window is
-# therefore [from_date 00:00:00Z, to_date 00:00:00Z).
+# Auto Loader's modifiedAfter/modifiedBefore filters use cloud-file modification
+# time, not a business-date column inside the file. The modifiedBefore boundary
+# is exclusive, so the requested window is [from_date 00:00:00Z, to_date 00:00:00Z).
 from_timestamp = f"{from_date}T00:00:00.000Z"
 to_timestamp = f"{to_date}T00:00:00.000Z"
 window_key = f"{from_date}_{to_date}"
@@ -83,6 +84,10 @@ enriched_stream = (
     .withColumn("bronze_inserted_at", current_timestamp())
 )
 
+# Keep diagnostic timestamp literals aligned with the UTC value captured below.
+spark.conf.set("spark.sql.session.timeZone", "UTC")
+run_start_time = datetime.now(timezone.utc)
+
 query = (
     enriched_stream.writeStream.format("delta")
     .outputMode("append")
@@ -92,19 +97,16 @@ query = (
     .toTable(f"{catalog}.bronze.{table}")
 )
 
-run_start_time = datetime.now(timezone.utc)
 query.awaitTermination()
 
 total_rows = sum(progress.get("numInputRows", 0) for progress in query.recentProgress)
 if total_rows > 0:
-    run_start_str = run_start_time.strftime("%Y-%m-%d %H:%M:%S")
-    distinct_files_df = spark.sql(f"""
-        SELECT COUNT(DISTINCT input_file_name) AS file_count
-        FROM {catalog}.bronze.{table}
-        WHERE country_code = '{country}'
-          AND bronze_inserted_at >= '{run_start_str}'
-    """)
-    num_files = distinct_files_df.collect()[0]["file_count"]
+    num_files = (
+        spark.table(f"{catalog}.bronze.{table}")
+        .filter((col("country_code") == country) & (col("bronze_inserted_at") >= lit(run_start_time)))
+        .select(countDistinct("input_file_name").alias("file_count"))
+        .collect()[0]["file_count"]
+    )
 else:
     num_files = 0
 

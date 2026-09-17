@@ -1,6 +1,7 @@
 import argparse
 import sys
 from datetime import datetime, timezone
+from functools import reduce
 
 from pyspark.sql import Window
 from pyspark.sql.functions import col, current_timestamp, lit, row_number
@@ -62,11 +63,26 @@ def process_micro_batch(micro_batch_df, batch_id, current_country):
     # Isolate memory partitions to deduplicate the 10-minute micro-batch data footprint
     window_spec = Window.partitionBy(primary_key).orderBy(col(version_col).desc())
 
+    deduped_df = (
+        micro_batch_df.withColumn("row_num", row_number().over(window_spec)).filter(col("row_num") == 1).drop("row_num")
+    )
+
+    # A missing source column is an expected schema gap. A non-null value that
+    # becomes null after casting is a real data-quality failure to quarantine.
+    cast_failure_checks = [
+        col(field.name).isNotNull() & col(field.name).cast(field.dataType).isNull()
+        for field in strict_schema
+        if field.name in existing_columns
+    ]
+    has_cast_failure = (
+        reduce(lambda left, right: left | right, cast_failure_checks) if cast_failure_checks else lit(False)
+    )
+    flagged_df = deduped_df.withColumn("_has_cast_failure", has_cast_failure).cache()
+
+    rejected_df = flagged_df.filter(col("_has_cast_failure")).drop("_has_cast_failure")
+    clean_source_df = flagged_df.filter(~col("_has_cast_failure")).drop("_has_cast_failure")
     clean_updates_df = (
-        micro_batch_df.withColumn("row_num", row_number().over(window_spec))
-        .filter(col("row_num") == 1)
-        .drop("row_num")
-        .select(*cast_expressions)  # Explicit type cast & rogue column drop guard
+        clean_source_df.select(*cast_expressions)  # Explicit type cast & rogue column drop guard
         .withColumn("country_code", lit(current_country))  # Re-attach after select; needed for multi-country merge key
         .withColumn("last_update", current_timestamp())  # Automated auditing stamp
         .cache()
@@ -75,6 +91,26 @@ def process_micro_batch(micro_batch_df, batch_id, current_country):
     try:
         # Target Table naming definitions managed by Unity Catalog
         target_table_name = f"{catalog}.silver.{table_name}"
+
+        rejected_count = rejected_df.count()
+        if rejected_count > 0:
+            quarantine_schema = f"{catalog}.quarantine"
+            quarantine_table = f"{quarantine_schema}.{table_name}"
+            spark.sql(f"CREATE SCHEMA IF NOT EXISTS {quarantine_schema}")
+            (
+                rejected_df.withColumn("_quarantine_reason", lit("schema_cast_failure"))
+                .withColumn("_quarantine_batch_id", lit(batch_id))
+                .withColumn("_quarantine_country", lit(current_country))
+                .withColumn("_quarantined_at", current_timestamp())
+                .write.format("delta")
+                .mode("append")
+                .option("mergeSchema", "true")
+                .saveAsTable(quarantine_table)
+            )
+            print(
+                f"[Silver batch_id={batch_id}] Quarantined {rejected_count} rows that failed schema cast "
+                f"to {quarantine_table}."
+            )
 
         batch_row_count = clean_updates_df.count()
         print(
@@ -114,6 +150,7 @@ def process_micro_batch(micro_batch_df, batch_id, current_country):
         )
     finally:
         clean_updates_df.unpersist()
+        flagged_df.unpersist()
 
 
 # 5. Kick off Streaming processing and checkpoint logging tracking
