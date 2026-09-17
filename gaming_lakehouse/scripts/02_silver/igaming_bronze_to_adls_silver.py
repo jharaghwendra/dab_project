@@ -69,47 +69,51 @@ def process_micro_batch(micro_batch_df, batch_id, current_country):
         .select(*cast_expressions)  # Explicit type cast & rogue column drop guard
         .withColumn("country_code", lit(current_country))  # Re-attach after select; needed for multi-country merge key
         .withColumn("last_update", current_timestamp())  # Automated auditing stamp
+        .cache()
     )
 
-    # Target Table naming definitions managed by Unity Catalog
-    target_table_name = f"{catalog}.silver.{table_name}"
+    try:
+        # Target Table naming definitions managed by Unity Catalog
+        target_table_name = f"{catalog}.silver.{table_name}"
 
-    batch_row_count = clean_updates_df.count()
-    print(
-        f"[Silver batch_id={batch_id}] country={current_country} table={table_name} | rows in batch (after dedup): {batch_row_count}"
-    )
-    if batch_row_count == 0:
-        print(f"[Silver batch_id={batch_id}] Empty batch — nothing to upsert.")
-        return
-    total_rows_processed[0] += batch_row_count
-
-    # Schema initialization checkpoint initialization on run day one
-    if not spark.catalog.tableExists(target_table_name):
-        clean_updates_df.write.format("delta").mode("overwrite").saveAsTable(target_table_name)
+        batch_row_count = clean_updates_df.count()
         print(
-            f"[Silver batch_id={batch_id}] Table did not exist — created {target_table_name} with {batch_row_count} rows."
+            f"[Silver batch_id={batch_id}] country={current_country} table={table_name} | rows in batch (after dedup): {batch_row_count}"
         )
-        return
+        if batch_row_count == 0:
+            print(f"[Silver batch_id={batch_id}] Empty batch — nothing to upsert.")
+            return
+        total_rows_processed[0] += batch_row_count
 
-    # Execute the High-Speed distributed Delta Lake Upsert Merge
-    silver_delta_target = DeltaTable.forName(spark, target_table_name)
-    update_mapping = {field: f"source.{field}" for field in clean_updates_df.columns}
+        # Schema initialization checkpoint initialization on run day one
+        if not spark.catalog.tableExists(target_table_name):
+            clean_updates_df.write.format("delta").mode("overwrite").saveAsTable(target_table_name)
+            print(
+                f"[Silver batch_id={batch_id}] Table did not exist — created {target_table_name} with {batch_row_count} rows."
+            )
+            return
 
-    (
-        silver_delta_target.alias("target")
-        .merge(
-            clean_updates_df.alias("source"),
-            f"target.{primary_key} = source.{primary_key} AND target.country_code = source.country_code",
+        # Execute the High-Speed distributed Delta Lake Upsert Merge
+        silver_delta_target = DeltaTable.forName(spark, target_table_name)
+        update_mapping = {field: f"source.{field}" for field in clean_updates_df.columns}
+
+        (
+            silver_delta_target.alias("target")
+            .merge(
+                clean_updates_df.alias("source"),
+                f"target.{primary_key} = source.{primary_key} AND target.country_code = source.country_code",
+            )
+            # Match condition equivalent to legacy SQL upsert pattern: update only when source version is newer
+            .whenMatchedUpdate(condition=f"source.{version_col} > target.{version_col}", set=update_mapping)
+            # Insertion tracking rules for completely brand new entities
+            .whenNotMatchedInsert(values=update_mapping)
+            .execute()
         )
-        # Match condition equivalent to legacy SQL upsert pattern: update only when source version is newer
-        .whenMatchedUpdate(condition=f"source.{version_col} > target.{version_col}", set=update_mapping)
-        # Insertion tracking rules for completely brand new entities
-        .whenNotMatchedInsert(values=update_mapping)
-        .execute()
-    )
-    print(
-        f"[Silver batch_id={batch_id}] Upsert complete — {batch_row_count} source rows merged into {target_table_name}."
-    )
+        print(
+            f"[Silver batch_id={batch_id}] Upsert complete — {batch_row_count} source rows merged into {target_table_name}."
+        )
+    finally:
+        clean_updates_df.unpersist()
 
 
 # 5. Kick off Streaming processing and checkpoint logging tracking

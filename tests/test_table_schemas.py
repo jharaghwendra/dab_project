@@ -10,8 +10,7 @@ How to read this file (steps):
   Test 3 — does every registered table have a non-empty schema?
   Test 4 — does each table's primary_key actually exist as a column in its schema?
   Test 5 — get_table_config() returns the right config for a known table
-  Test 6 — get_table_config() returns a safe fallback for an unknown table
-  Test 7 — the fallback primary_key follows the naming convention
+    Test 6 — get_table_config() rejects an unknown table clearly
 """
 
 import pytest
@@ -98,22 +97,11 @@ def test_05_get_table_config_returns_correct_config_for_known_table():
 
 
 # ---------------------------------------------------------------------------
-# Test 6 — get_table_config() returns a safe fallback for an unknown table
+# Test 6 — get_table_config() rejects an unknown table clearly
 # ---------------------------------------------------------------------------
-def test_06_get_table_config_returns_fallback_for_unknown_table():
-    # Test: during rollout of new tables we haven't fully defined yet,
-    # the silver script must not crash — it gets a minimal working config instead.
-    config = get_table_config("unknowntable")
-    assert isinstance(config, TableConfig)
-    assert isinstance(config.schema, StructType)
-    assert config.primary_key != ""
+def test_06_get_table_config_rejects_unknown_table():
+    # Test: a misspelled or stale job parameter fails before streaming or MERGE.
+    with pytest.raises(ValueError, match="No TableConfig registered for table_name='wallet'") as exc_info:
+        get_table_config("wallet")
 
-
-# ---------------------------------------------------------------------------
-# Test 7 — the fallback primary_key follows the {table_name}Id convention
-# ---------------------------------------------------------------------------
-def test_07_fallback_primary_key_follows_naming_convention():
-    # Test: fallback pk is "{table_name}_id" so the merge column can be
-    # inferred from the table name without any extra config.
-    config = get_table_config("wallet")
-    assert config.primary_key == "wallet_id"
+    assert "ig_player_limit" in str(exc_info.value)

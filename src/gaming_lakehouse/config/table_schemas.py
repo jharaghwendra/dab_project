@@ -268,7 +268,8 @@ TABLE_CONFIGS: dict[str, TableConfig] = {
 
 
 def get_table_config(table_name: str) -> TableConfig:
-    if table_name in TABLE_CONFIGS:
-        return TABLE_CONFIGS[table_name]
-
-    return TableConfig(primary_key=f"{table_name}_id", schema=StructType([]))
+    if table_name not in TABLE_CONFIGS:
+        raise ValueError(
+            f"No TableConfig registered for table_name={table_name!r}. Registered: {sorted(TABLE_CONFIGS)}"
+        )
+    return TABLE_CONFIGS[table_name]
